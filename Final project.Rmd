@@ -8,19 +8,13 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
-
-# 1. Create the venv only once:
-if (!virtualenv_exists("r-reticulate")) {
-  virtualenv_create("r-reticulate")
-}
-if (!virtualenv_exists("r-reticulate")) {
-  virtualenv_create("r-reticulate",
-                    python = "C:/Users/ahnd6/AppData/Local/Programs/Python/Python39/python.exe")
-}
-# 2. Tell reticulate to use it:
-use_virtualenv("r-reticulate", required = TRUE)
-
+use_python(file.path(getwd(), ".venv", ifelse(.Platform$OS.type=="windows","Scripts/python.exe","bin/python")), required=TRUE)
 py_config()
+
+# 프로젝트 폴더의 가상환경을 그대로 가리킵니다.
+#use_virtualenv(".venv", required = TRUE)
+
+# 정상적으로 인식됐는지 확인
 ```
 
 # Introduction
