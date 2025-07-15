@@ -1,0 +1,19 @@
+---
+title: "Final project"
+author: "Danny Ahn"
+date: "2025-07-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+The original idea on this project was using Sentence BERT(SBERT) embedding to classify, human and AI generated text. However this attempt was unsuccessful because features that were extracted from SBERT failed to capture any significant information as shown in PCA plot below.
+
+
+
+
+
+
