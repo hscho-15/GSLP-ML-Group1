@@ -65,7 +65,7 @@ texts=a
 labels=[0 if i<len(ap) else 1 for i in range(len(texts))]
 from sklearn.model_selection import train_test_split
 
-# 1) 먼저 train_temp(80%)와 test(20%) 분할
+#split train, test and validation data. 
 texts_train_val, texts_test, labels_train_val, labels_test = train_test_split(
     texts,
     labels,
