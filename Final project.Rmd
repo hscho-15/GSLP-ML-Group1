@@ -7,10 +7,45 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+
+# 1. Create the venv only once:
+if (!virtualenv_exists("r-reticulate")) {
+  virtualenv_create("r-reticulate")
+}
+if (!virtualenv_exists("r-reticulate")) {
+  virtualenv_create("r-reticulate",
+                    python = "C:/Users/ahnd6/AppData/Local/Programs/Python/Python39/python.exe")
+}
+# 2. Tell reticulate to use it:
+use_virtualenv("r-reticulate", required = TRUE)
+
+py_config()
 ```
 
 # Introduction
-The original idea on this project was using Sentence BERT(SBERT) embedding to classify, human and AI generated text. However this attempt was unsuccessful because features that were extracted from SBERT failed to capture any significant information as shown in PCA plot below.
+The original idea on this project was using Sentence Transformers(SBERT, for reference view https://sbert.net/) embedding to classify, human and AI generated text. However this attempt was unsuccessful because features that were extracted from SBERT failed to capture any significant information as shown in t-SNE plot below. Seeing this, choose to fine tune pretrained LLM RoBERTa. 
+
+![t-SNE plot of SBERT feature](images/TSNE_plot.png)
+
+## Background knowledge
+
+#Methods
+
+This part was implemented in python because, RoBERTa and other Transformer systems in R is not mature as python and it was thought to be better to use reticulate instead of using pure R. This model was trained with P100 GPU on Kaggle. Use pip in python enviroment in R use below. 
+
+```{python}
+pkgs <- c('transformers', 'datasets', 'torch', 'scikit-learn', 'evaluate', 'pandas', 'scikit-learn', 'tqdm' )
+to_install <- pkgs[!sapply(pkgs, py_module_available)]
+if (length(to_install)) {
+  reticulate::pip_install(to_install)
+```
+
+```{python}
+
+
+
+
 
 
 
