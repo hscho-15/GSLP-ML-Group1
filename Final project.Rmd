@@ -5,17 +5,7 @@ date: "2025-07-15"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(reticulate)
 
-use_python(
-  "C:/Users/ahnd6/AppData/Local/Programs/Python/Python39/python.exe", #use your own path to python
-  required = TRUE
-)
-py_config()
-
-```
 
 # Introduction
 The original idea on this project was using Sentence Transformers(SBERT, for reference view https://sbert.net/) embedding to classify, human and AI generated text. However this attempt was unsuccessful because features that were extracted from SBERT failed to capture any significant information as shown in t-SNE plot below. Seeing this, choose to fine tune pretrained LLM RoBERTa. 
@@ -39,77 +29,77 @@ Our approach combines sentence-level encoding with a multi-attention mechanism t
 RoBERTector is finetuned RoBerta that specify on AI detection on sentence level. it's predeictive abilitwes were Accuracy: 0.8648  F1 Score: 0.8644 on validation set. 
 
 ## Architecture
-
-Sentence Splitting:
-Each paragraph is split into up to three sentences. If there are fewer, padding is applied; if more, we truncate after the third sentence. This ensures consistent input size.
-
-Sentence Encoding with RoBERTEctor:
-Each sentence is processed independently using RoBERTEctor, a fine-tuned version of RoBERTa tailored for our task. This module generates contextual embeddings that capture the meaning of each sentence.
-
-Multi-Attention Layer:
-The sentence embeddings are passed to a multi-attention layer that weighs the importance of each sentence. This allows the model to focus on the most informative parts of the paragraph, rather than treating all sentences equally.
-
-Final Decision:
-The weighted sentence representations are aggregated into a single vector, which is used to make the final classification through a fully connected layer.
-
-## Architecture
-
-This architecture combines a fine‑tuned sentence encoder (“RoBERTector”) with a lightweight, attention‑based paragraph aggregator to achieve strong AI vs. human text classification.
+![Architecture](images/Architecture.png)
+### 1. Sentence Splitting  
+- **Objective**: Break each variable‑length paragraph into a fixed number of sentence slots.  
+- **Process**:  
+  1. **Token‑level segmentation**: Split on sentence delimiters (e.g., “.”, “?”, “!”), trim whitespace, filter out empty results.  
+  2. **Truncation**: If a paragraph yields more than 16 sentences, keep only the **first 16** (to cap memory/compute).  
+  3. **Padding**: If fewer than 16, pad with dummy “<PAD>” sentences so that every input tensor has shape `(batch_size, 16, max_len)`.  
+- **Benefit**: Guarantees a consistent input tensor shape for downstream encoders and attention, simplifying batching and avoiding dynamic control flow.
 
 ---
 
-## 1. Sentence‑Level Expertise  
-- **Pretrained & Fine‑Tuned**  
-  - Each sentence is encoded by RoBERTector, already trained to spot AI‑generated vs. human style at the sentence level.  
-- **Subtle Stylistic Cues**  
-  - Captures token‑level patterns, phrasing, function‑word frequencies, and other hallmarks of AI or human writing.  
-- **Freezing for Stability**  
-  - Freezing the encoder preserves these robust features and prevents overfitting on paragraph data.
+### 2. Sentence Encoding with RoBERTector  
+- **Encoder**: A frozen, fine‑tuned **RoBERTector** (RoBERTa model trained on AI vs. human sentence labels).  
+- **Independent Processing**:  
+  1. Each of the 16 sentence slots is tokenized (up to `max_length` tokens) and fed independently through the transformer encoder.  
+  2. We extract the **CLS** token embedding (size 768) from each run, yielding a matrix of shape `(batch_size, 16, 768)`.  
+- **Why Freeze?**:  
+  - Locks in sentence‑level distinctions learned during sentence‑level fine‑tuning.  
+  - Reduces risk of overfitting on the smaller paragraph dataset and cuts training time.
 
 ---
 
-## 2. Cross‑Sentence Interaction via Multi‑Head Self‑Attention  
-- **Beyond Simple Averaging**  
-  - Sentence embeddings vary in importance—some contain the thesis, topic shifts, or concluding signals.  
-- **Learned Importance Weights**  
-  - Attention heads score every sentence against every other, highlighting the most diagnostic ones.  
-- **Multiple Perspectives**  
-  - Different heads can specialize (e.g., one for discourse markers, another for cohesion, etc.).
+### 3. Multi‑Attention Layer  
+- **Purpose**: Learn to weigh each sentence’s contribution to the paragraph classification.  
+- **Mechanism**:  
+  1. **Self‑Attention**: Apply a `MultiheadAttention` module (4 heads, `embed_dim=768`) to the 16 CLS embeddings.  
+     - Query, Key, Value all ← sentence embedding matrix  
+     - Produces attended outputs and a `(batch_size, 16, 16)` attention weight tensor per head.  
+  2. **Aggregation**:  
+     - **Mean‑pool** the attended outputs across the sentence dimension → `(batch_size, 768)`.  
+- **Advantages**:  
+  - **Adaptive Focus**: Heads can specialize on stylistic cues, discourse markers, or cohesion patterns.  
+  - **Inter‑Sentence Dynamics**: Captures transitions, contradictions, or repetitive structures indicative of AI text.
 
 ---
 
-## 3. Macro‑Pattern Aggregation  
-- **Local + Global Signals**  
-  - Pools the attended sentence embeddings into a single paragraph vector that encodes:  
-    1. **Local signals** (sentence‑level AI/human stylistic cues)  
-    2. **Global structure** (discourse flow, abrupt transitions, uniformity)  
-- **Robust Paragraph Representation**  
-  - Captures both micro‑stylistic and macro‑structural features.
-
----
-
-## 4. Lightweight Classification Head  
-- **Minimal Parameters**  
-  - A two‑layer MLP with ReLU and dropout maps the paragraph embedding to a binary decision.  
-- **Focused Learning**  
-  - Only the attention and MLP head learn; the heavy transformer remains frozen.
-
----
-
-## Why It Works Better Than Alternatives  
-1. **Reuses Proven Features**  
-   - Leverages a sentence‑level model already adept at AI vs. human discrimination.  
-2. **Adaptive Sentence Weighting**  
-   - Attention pinpoints the most telling sentences in each paragraph.  
-3. **Models Sentence Interactions**  
-   - Captures contradictions or over‑consistency—common in AI text.  
-4. **Regularization by Freezing**  
-   - Prevents catastrophic forgetting and overfitting on limited paragraph data.  
-
-Together, these components yield higher accuracy and generalization than approaches that either ignore inter‑sentence context or train a full transformer from scratch on small paragraph datasets.  
+### 4. Final Decision  
+- **Classification Head**: A lightweight MLP (`768 → 384 → 1`) with ReLU, dropout (0.1), and **no upstream fine‑tuning** beyond the head.  
+- **Output**: Single logit per paragraph → passed through **sigmoid** → probability \(p\) that the paragraph is AI‑generated.  
+- **Thresholding**:  
+  - Decision rule:  
+    \[
+      \hat{y} = 
+      \begin{cases}
+        1 & \text{if } p \ge 0.5 \\
+        0 & \text{otherwise}
+      \end{cases}
+    \]
+- **Training Details**:  
+  - **Loss**: `BCEWithLogitsLoss` on the raw logit (stable combination of sigmoid + binary CE).  
+  - **Optimizer**: AdamW (lr=1e‑4) on attention + MLP parameters only.  
+  - **Checkpointing**: Save model weights after **every epoch**.  
+  - **Validation/Test**: 80/10/10 split on ~20K paragraphs; test evaluated **once** at the end.
 
 
+## Fine tuning RoBERTa
+Fine tuned Roberta will be adressed as RoBERTector
 
+### Set up python enviroment
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+
+use_python(
+  "C:/Users/ahnd6/AppData/Local/Programs/Python/Python39/python.exe", #use your own path to python
+  required = TRUE
+)
+py_config()
+
+```
+### Install packages
 ```{r install-python-pkgs, include=FALSE}
 library(reticulate)
 
@@ -125,7 +115,7 @@ if (length(to_install)) {
   py_install(packages = to_install, pip = TRUE)
 }
 ```
-
+### Load data and split paragraphs into sentences
 ```{python}
 import pandas as pd
 df=pd.read_csv('/kaggle/input/ai-text/ai_press_releases.csv')
@@ -171,7 +161,7 @@ print(f"Test : {len(texts_test)} samples")
 
 ```
 
-
+# Load Roberta and fine tune
 ```{python}
 import torch
 from torch.utils.data import DataLoader
@@ -266,5 +256,268 @@ for epoch in range(1, num_epochs+1):
     print(f"→ Model & Tokenizer saved to: {save_dir}\n")
 
 ```
+
+## Training Multi Attention Layer
+
+### Load packages
+```{python}
+import torch
+from torch.utils.data import DataLoader
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import get_linear_schedule_with_warmup
+from torch.optim import AdamW
+from datasets import Dataset
+from tqdm.auto import tqdm
+from sklearn.metrics import accuracy_score, f1_score
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader, random_split
+import random
+import os
+def set_seed(seed=42):
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+set_seed(42)
+```
+
+### Load data
+```{python}
+df=pd.read_csv('/kaggle/input/ai-text/ai_press_releases.csv')
+df=df.dropna()
+human=df['non_chat_gpt_press_release'].to_list()
+ai=df['chat_gpt_generated_release'].to_list()
+labels=[0 if i<len(ai) else 1 for i in range(len(ai)+len(human))]
+ai.extend(human)
+texts=ai
+# 1) 먼저 train_temp(80%)와 test(20%) 분할
+texts_train_val, texts_test, labels_train_val, labels_test = train_test_split(
+    texts,
+    labels,
+    test_size=0.2,       # 전체의 20%
+    random_state=42,
+    stratify=labels      # 레이블 비율 유지
+)
+
+# 2) train_temp을 다시 train(75% of temp → 60% 전체)와 val(25% of temp → 20% 전체)로 분할
+texts_train, texts_val, labels_train, labels_val = train_test_split(
+    texts_train_val,
+    labels_train_val,
+    test_size=0.25,      # train_temp의 25% → 전체의 0.2
+    random_state=42,
+    stratify=labels_train_val
+)
+
+print(f"Train: {len(texts_train)} samples")
+print(f"Valid: {len(texts_val)} samples")
+print(f"Test : {len(texts_test)} samples")
+```
+
+### Define helper and Multiattention layer class
+
+```{python}
+# 2. Sentence split
+def split_sentences(paragraph: str):
+    return [s.strip() for s in paragraph.split('. ') if s.strip()]
+
+# 3. Dataset
+class ParagraphDataset(Dataset):
+    def __init__(self, texts, labels, tokenizer, max_sents=16, max_len=128):
+        self.texts = texts
+        self.labels = labels
+        self.tokenizer = tokenizer
+        self.max_sents = max_sents
+        self.max_len = max_len
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, i):
+        para = self.texts[i]
+        label = torch.tensor(self.labels[i], dtype=torch.float)
+        sents = split_sentences(para)[:self.max_sents]
+        encs = [self.tokenizer(s, truncation=True, padding='max_length',
+                               max_length=self.max_len, return_tensors='pt')
+                for s in sents]
+        # pad sentences
+        pad_n = self.max_sents - len(encs)
+        input_ids = torch.stack([e['input_ids'].squeeze(0) for e in encs] +
+                                [torch.zeros(self.max_len, dtype=torch.long)]*pad_n)
+        attn_mask = torch.stack([e['attention_mask'].squeeze(0) for e in encs] +
+                                [torch.zeros(self.max_len, dtype=torch.long)]*pad_n)
+        return input_ids, attn_mask, label
+
+# 4. Model: frozen encoder + attention + classifier
+import torch
+import torch.nn as nn
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+class HierAttnClassifier(nn.Module):
+    def __init__(self,
+                 base_model_name="/kaggle/input/robertector/transformers/sentences/1/checkpoint-epoch3",
+                 max_sents=16,
+                 hidden=768,
+                 heads=4):
+        super().__init__()
+        # 1) Load your fine‑tuned SequenceClassification model
+        self.full_model = AutoModelForSequenceClassification.from_pretrained(
+            base_model_name, output_hidden_states=True, return_dict=True
+        )
+        # 2) Freeze all its parameters
+        for p in self.full_model.parameters():
+            p.requires_grad = False
+
+        # 3) Multi‑Head Attention on the CLS embeddings
+        self.attn = nn.MultiheadAttention(embed_dim=hidden,
+                                          num_heads=heads,
+                                          batch_first=True)
+        # 4) Final MLP head after attention
+        self.classifier = nn.Sequential(
+            nn.Linear(hidden, hidden // 2),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(hidden // 2, 1),
+        )
+
+    def forward(self, input_ids, attention_mask):
+        b, s, l = input_ids.size()
+        # flatten to (b*s, l)
+        flat_ids   = input_ids.view(b * s, l)
+        flat_mask  = attention_mask.view(b * s, l)
+        # 5) Run through RoBERTector; we asked for hidden_states
+        outputs = self.full_model(
+            input_ids=flat_ids,
+            attention_mask=flat_mask,
+        )
+        # 6) Grab the last hidden layer states: outputs.hidden_states is a tuple
+        #    where hidden_states[-1] is (batch, seq_len, hidden)
+        last_hid = outputs.hidden_states[-1]        
+        # CLS is token 0
+        cls_embs = last_hid[:, 0, :].view(b, s, -1)  # (b, s, hidden)
+
+        # 7) Self‑attention over the s sentence embeddings
+        attn_out, _ = self.attn(cls_embs, cls_embs, cls_embs)  # (b, s, hidden)
+
+        # 8) Pool and classify
+        doc_emb = attn_out.mean(dim=1)                       # (b, hidden)
+        logits = self.classifier(doc_emb).squeeze(-1)        # (b,)
+        return logits
+```
+
+### Load RoBERTector and set up hyperparameters
+
+```{python}
+# 5. Prepare data, loaders, model, optimizer
+model_path = "/kaggle/input/robertector/transformers/sentences/1/checkpoint-epoch3"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Load the tokenizer from the directory
+# This reads files like tokenizer.json and tokenizer_config.json
+tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+# Load the model from the directory
+model = AutoModelForSequenceClassification.from_pretrained(model_path).to(device)
+dataset = ParagraphDataset(texts, labels, tokenizer)
+n = len(dataset)
+
+train_n = int(0.6*n); val_n = int(0.2*n); test_n = n - train_n - val_n
+train_ds, val_ds, test_ds = random_split(dataset, [train_n, val_n, test_n])
+train_loader = DataLoader(train_ds, batch_size=64, shuffle=True, num_workers=2)
+val_loader   = DataLoader(val_ds, batch_size=64, num_workers=2)
+test_loader  = DataLoader(test_ds, batch_size=64, num_workers=2)
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = HierAttnClassifier().to(device)
+opt = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-4)
+criterion = nn.BCEWithLogitsLoss()
+
+```
+
+### Train Multi Attention Layer
+```{python}
+from tqdm.auto import tqdm
+
+num_epochs = 6
+os.makedirs('/kaggle/working/ckpts', exist_ok=True)
+
+for epoch in range(1, num_epochs + 1):
+    # ── TRAIN ───────────────────────────────────────────────
+    model.train()
+    train_loss_sum = 0.0
+    train_steps    = 0
+    loop = tqdm(train_loader, desc=f"Train E{epoch}")
+    for ids, mask, lbl in loop:
+        ids, mask, lbl = ids.to(device), mask.to(device), lbl.to(device)
+        opt.zero_grad()
+        logits = model(ids, mask)
+        loss   = criterion(logits, lbl)
+        loss.backward()
+        opt.step()
+
+        train_loss_sum += loss.item()
+        train_steps    += 1
+        # tqdm 바에 현재 배치 손실 표시
+        loop.set_postfix(loss=f"{loss.item():.4f}")
+
+    avg_train_loss = train_loss_sum / train_steps
+    print(f"Epoch {epoch} | Train Loss: {avg_train_loss:.4f}")
+
+    # ── VALIDATION ─────────────────────────────────────────
+    model.eval()
+    val_loss_sum = 0.0
+    preds, trues = [], []
+    with torch.no_grad():
+        for ids, mask, lbl in val_loader:
+            ids, mask, lbl = ids.to(device), mask.to(device), lbl.to(device)
+            logits = model(ids, mask)
+            loss   = criterion(logits, lbl)
+            val_loss_sum += loss.item()
+            preds += (torch.sigmoid(logits) > 0.5).cpu().int().tolist()
+            trues += lbl.cpu().int().tolist()
+    avg_val_loss = val_loss_sum / len(val_loader)
+    acc = accuracy_score(trues, preds)
+    f1  = f1_score(trues, preds)
+    print(f"Epoch {epoch} | Val Loss: {avg_val_loss:.4f} | Acc: {acc:.4f} | F1: {f1:.4f}")
+
+    # ── CHECKPOINT SAVE ────────────────────────────────────
+    checkpoint_path = f"/kaggle/working/ckpts/epoch{epoch}.pt"
+    torch.save(model.state_dict(), checkpoint_path)
+    print(f"Saved checkpoint: {checkpoint_path}")
+
+# ── FINAL TEST ────────────────────────────────────────────
+model.load_state_dict(torch.load('/kaggle/working/ckpts/epoch6.pt'))
+model.eval()
+preds, trues = [], []
+with torch.no_grad():
+    for ids, mask, lbl in test_loader:
+        ids, mask, lbl = ids.to(device), mask.to(device), lbl.to(device)
+        logits = model(ids, mask)
+        preds += (torch.sigmoid(logits) > 0.5).cpu().int().tolist()
+        trues += lbl.cpu().int().tolist()
+acc = accuracy_score(trues, preds)
+f1  = f1_score(trues, preds)
+print(f"Test Acc {acc:.4f} | F1 {f1:.4f}")
+```
+
+# Results
+
+## FineTuning
+
+![learning plot on accuracy](images/Robertector_Accuracy.png)
+![learning plot on F1 score](images/Robertector_F1.png)
+
+
+## Training Multi Attention layer
+
+
+
+
+
+
+
+
+
 
 
