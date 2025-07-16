@@ -32,8 +32,21 @@ At a lower level, the **perceptron** serves as the basic unit of deep neural net
 
 
 #Methods
+Our approach combines sentence-level encoding with a multi-attention mechanism to classify paragraph-level text. 
 
-This part was implemented in python because, RoBERTa and other Transformer systems in R is not mature as python and it was thought to be better to use reticulate instead of using pure R. This model was trained with P100 GPU on Kaggle for 10 hours. When reproducing the results, it is highly not recomended run this on CPU. Use pip in python enviroment in R use below. 
+This is how our model architecture works:
+
+Sentence Splitting:
+Each paragraph is split into up to three sentences. If there are fewer, padding is applied; if more, we truncate after the third sentence. This ensures consistent input size.
+
+Sentence Encoding with RoBERTEctor:
+Each sentence is processed independently using RoBERTEctor, a fine-tuned version of RoBERTa tailored for our task. This module generates contextual embeddings that capture the meaning of each sentence.
+
+Multi-Attention Layer:
+The sentence embeddings are passed to a multi-attention layer that weighs the importance of each sentence. This allows the model to focus on the most informative parts of the paragraph, rather than treating all sentences equally.
+
+Final Decision:
+The weighted sentence representations are aggregated into a single vector, which is used to make the final classification through a fully connected layer.
 
 ```{r install-python-pkgs, include=FALSE}
 library(reticulate)
