@@ -2,7 +2,9 @@
 title: "Final project"
 author: "Danny Ahn"
 date: "2025-07-15"
-output: pdf_document
+output: 
+  pdf_document:
+    latex_engine: xelatex
 ---
 
 
@@ -21,71 +23,27 @@ At a lower level, the **perceptron** serves as the basic unit of deep neural net
 **Fine-tuning** is applied to adapt a pre-trained model to a specific dataset, improving task-specific performance. In this project, RoBERTa is fine-tuned to classify U.S. Senate press releases as either human- or AI-generated, utilizing these core principles in a practical application.
 
 
-#Methods
+# Methods
 
 Our approach combines sentence-level encoding with a multi-attention mechanism to classify paragraph-level text.
+
 ## RoBERTector
 
 RoBERTector is finetuned RoBerta that specify on AI detection on sentence level. it's predeictive abilitwes were Accuracy: 0.8648  F1 Score: 0.8644 on validation set. 
 
 ## Architecture
 ![Architecture](images/Architecture.png)
-### 1. Sentence Splitting  
-- **Objective**: Break each variable‑length paragraph into a fixed number of sentence slots.  
-- **Process**:  
-  1. **Token‑level segmentation**: Split on sentence delimiters (e.g., “.”, “?”, “!”), trim whitespace, filter out empty results.  
-  2. **Truncation**: If a paragraph yields more than 16 sentences, keep only the **first 16** (to cap memory/compute).  
-  3. **Padding**: If fewer than 16, pad with dummy “<PAD>” sentences so that every input tensor has shape `(batch_size, 16, max_len)`.  
-- **Benefit**: Guarantees a consistent input tensor shape for downstream encoders and attention, simplifying batching and avoiding dynamic control flow.
+# Model Architecture in Prose
 
----
+Our model begins by **splitting each paragraph** into at most 16 sentences.  We scan for sentence delimiters (`.`, `?`, `!`), trim whitespace, and discard empty fragments.  If a paragraph produces fewer than 16 sentences, we pad the remainder with dummy tokens; if it exceeds 16, we simply truncate after the 16th.  This approach guarantees every input tensor has a fixed shape `(batch_size × 16 × max_length)`, which simplifies batching and avoids dynamic control‐flow overhead.
 
-### 2. Sentence Encoding with RoBERTector  
-- **Encoder**: A frozen, fine‑tuned **RoBERTector** (RoBERTa model trained on AI vs. human sentence labels).  
-- **Independent Processing**:  
-  1. Each of the 16 sentence slots is tokenized (up to `max_length` tokens) and fed independently through the transformer encoder.  
-  2. We extract the **CLS** token embedding (size 768) from each run, yielding a matrix of shape `(batch_size, 16, 768)`.  
-- **Why Freeze?**:  
-  - Locks in sentence‑level distinctions learned during sentence‑level fine‑tuning.  
-  - Reduces risk of overfitting on the smaller paragraph dataset and cuts training time.
+Next, each of these up to 16 sentence slots is **encoded independently** by RoBERTector(a RoBERTa model that was previously fine‑tuned on sentence‑level AI vs. human text classification).  By freezing all of RoBERTector’s parameters, we preserve its robust ability to capture subtle stylistic and lexical cues (word choice, phrasing patterns, function‐word frequencies) without risking over‑fitting on our comparatively small paragraph dataset.  From each sentence’s transformer output we extract the `CLS` token embedding (a 768‑dimensional vector), producing a tensor of shape `(batch_size, 16, 768)`.
 
----
+These 16 sentence embeddings are then fed into a **multi‑head self‑attention layer** (four heads, embed_dim=768).  Because the Query, Key, and Value all derive from the same set of sentence embeddings, the attention mechanism learns to assign higher weights to the most informative sentences—thesis statements, topic transitions, or discourse markers—while down‑weighting less relevant ones.  The attended outputs are mean‑pooled across the sentence axis, yielding a single 768‑dimensional “paragraph embedding” that fuses both micro‑level sentence cues and macro‑level discourse structure.
 
-### 3. Multi‑Attention Layer  
-- **Purpose**: Learn to weigh each sentence’s contribution to the paragraph classification.  
-- **Mechanism**:  
-  1. **Self‑Attention**: Apply a `MultiheadAttention` module (4 heads, `embed_dim=768`) to the 16 CLS embeddings.  
-     - Query, Key, Value all ← sentence embedding matrix  
-     - Produces attended outputs and a `(batch_size, 16, 16)` attention weight tensor per head.  
-  2. **Aggregation**:  
-     - **Mean‑pool** the attended outputs across the sentence dimension → `(batch_size, 768)`.  
-- **Advantages**:  
-  - **Adaptive Focus**: Heads can specialize on stylistic cues, discourse markers, or cohesion patterns.  
-  - **Inter‑Sentence Dynamics**: Captures transitions, contradictions, or repetitive structures indicative of AI text.
+Finally, a **lightweight classification head** (a two‑layer MLP with ReLU and dropout) maps this paragraph embedding to a single logit.  We apply `BCEWithLogitsLoss` during training—combining sigmoid activation and binary cross‑entropy in a numerically stable way—and use a 0.5 threshold on the sigmoid probability to make the AI vs. human decision.  We train only the attention and MLP head (leaving RoBERTector frozen), save model checkpoints after every epoch, and evaluate on an 80/10/10 train/val/test split of our ~20 000‑paragraph dataset (with test performed just once at the end).
 
----
-
-### 4. Final Decision  
-- **Classification Head**: A lightweight MLP (`768 → 384 → 1`) with ReLU, dropout (0.1), and **no upstream fine‑tuning** beyond the head.  
-- **Output**: Single logit per paragraph → passed through **sigmoid** → probability \(p\) that the paragraph is AI‑generated.  
-- **Thresholding**:  
-  - Decision rule:  
-    \[
-      \hat{y} = 
-      \begin{cases}
-        1 & \text{if } p \ge 0.5 \\
-        0 & \text{otherwise}
-      \end{cases}
-    \]
-- **Training Details**:  
-  - **Loss**: `BCEWithLogitsLoss` on the raw logit (stable combination of sigmoid + binary CE).  
-  - **Optimizer**: AdamW (lr=1e‑4) on attention + MLP parameters only.  
-  - **Checkpointing**: Save model weights after **every epoch**.  
-  - **Validation/Test**: 80/10/10 split on ~20K paragraphs; test evaluated **once** at the end.
-
-
-## Fine tuning RoBERTa
-Fine tuned Roberta will be adressed as RoBERTector
+By **reusing** a specialized sentence encoder, **learning** which sentences truly matter via attention, and **regularizing** most of the model by freezing, this architecture achieves high accuracy and generalization while remaining interpretable: attention weights can be visualized to show exactly which sentences drove each classification.
 
 ### Set up python enviroment
 ```{r setup, include=FALSE}
@@ -100,7 +58,7 @@ py_config()
 
 ```
 ### Install packages
-```{r install-python-pkgs, include=FALSE}
+```{r install-python-pkgs, include=FALSE, eval=FALSE}
 library(reticulate)
 
 # packages to install
@@ -116,7 +74,7 @@ if (length(to_install)) {
 }
 ```
 ### Load data and split paragraphs into sentences
-```{python}
+```{python, eval=FALSE}
 import pandas as pd
 df=pd.read_csv('/kaggle/input/ai-text/ai_press_releases.csv')
 df=df.dropna()
@@ -162,7 +120,7 @@ print(f"Test : {len(texts_test)} samples")
 ```
 
 # Load Roberta and fine tune
-```{python}
+```{python, eval=FALSE}
 import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -260,7 +218,7 @@ for epoch in range(1, num_epochs+1):
 ## Training Multi Attention Layer
 
 ### Load packages
-```{python}
+```{python, eval=FALSE}
 import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -284,7 +242,7 @@ set_seed(42)
 ```
 
 ### Load data
-```{python}
+```{python, eval=FALSE}
 df=pd.read_csv('/kaggle/input/ai-text/ai_press_releases.csv')
 df=df.dropna()
 human=df['non_chat_gpt_press_release'].to_list()
@@ -317,7 +275,7 @@ print(f"Test : {len(texts_test)} samples")
 
 ### Define helper and Multiattention layer class
 
-```{python}
+```{python, eval=FALSE}
 # 2. Sentence split
 def split_sentences(paragraph: str):
     return [s.strip() for s in paragraph.split('. ') if s.strip()]
@@ -408,7 +366,7 @@ class HierAttnClassifier(nn.Module):
 
 ### Load RoBERTector and set up hyperparameters
 
-```{python}
+```{python, eval=FALSE}
 # 5. Prepare data, loaders, model, optimizer
 model_path = "/kaggle/input/robertector/transformers/sentences/1/checkpoint-epoch3"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -436,7 +394,7 @@ criterion = nn.BCEWithLogitsLoss()
 ```
 
 ### Train Multi Attention Layer
-```{python}
+```{python, eval=FALSE}
 from tqdm.auto import tqdm
 
 num_epochs = 6
@@ -507,15 +465,16 @@ print(f"Test Acc {acc:.4f} | F1 {f1:.4f}")
 
 ![learning plot on accuracy](images/Robertector_Accuracy.png)
 ![learning plot on F1 score](images/Robertector_F1.png)
-
+model from epoch 3 was chosen.
 
 ## Training Multi Attention layer
 
 
 
+![learning plot](images/learning_plot_loss.png)
 
-
-
+![Accurracy over epochs](images/learning_plot_scores.png)
+model from epoch 4 was chosen.
 
 
 
