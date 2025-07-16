@@ -22,7 +22,14 @@ The original idea on this project was using Sentence Transformers(SBERT, for ref
 
 ![t-SNE plot of SBERT feature](images/TSNE_plot.png)
 
-## Background knowledge
+## Summary of Theoretical Background
+
+In this study, several foundational concepts in natural language processing and deep learning are used to distinguish between AI- and human-written texts. **RoBERTa**, an improved version of BERT, is employed for its optimized pretraining strategies and enhanced language understanding. The model architecture is based on the **Transformer**, which relies solely on **attention mechanisms** to process sequential data efficiently. The attention mechanism helps the model focus on relevant parts of the input, allowing better context understanding.
+
+At a lower level, the **perceptron** serves as the basic unit of deep neural networks, supporting more complex architectures like multi-layer networks. **Large Language Models (LLMs)**, such as ChatGPT, generate coherent text by predicting word sequences based on prior data. These models are trained using **backpropagation**, a method that calculates gradients using the **chain rule** to adjust model parameters.
+
+**Fine-tuning** is applied to adapt a pre-trained model to a specific dataset, improving task-specific performance. In this project, RoBERTa is fine-tuned to classify U.S. Senate press releases as either human- or AI-generated, utilizing these core principles in a practical application.
+
 
 #Methods
 
