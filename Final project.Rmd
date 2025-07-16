@@ -26,7 +26,7 @@ The original idea on this project was using Sentence Transformers(SBERT, for ref
 
 #Methods
 
-This part was implemented in python because, RoBERTa and other Transformer systems in R is not mature as python and it was thought to be better to use reticulate instead of using pure R. This model was trained with P100 GPU on Kaggle. Use pip in python enviroment in R use below. 
+This part was implemented in python because, RoBERTa and other Transformer systems in R is not mature as python and it was thought to be better to use reticulate instead of using pure R. This model was trained with P100 GPU on Kaggle for 10 hours. When reproducing the results, it is highly not recomended run this on CPU. Use pip in python enviroment in R use below. 
 
 ```{r install-python-pkgs, include=FALSE}
 library(reticulate)
