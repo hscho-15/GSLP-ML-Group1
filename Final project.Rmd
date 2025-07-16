@@ -22,7 +22,7 @@ The original idea on this project was using Sentence Transformers(SBERT, for ref
 
 ![t-SNE plot of SBERT feature](images/TSNE_plot.png)
 
-## Summary of Theoretical Background
+## Theoretical Background
 
 In this study, several foundational concepts in natural language processing and deep learning are used to distinguish between AI- and human-written texts. **RoBERTa**, an improved version of BERT, is employed for its optimized pretraining strategies and enhanced language understanding. The model architecture is based on the **Transformer**, which relies solely on **attention mechanisms** to process sequential data efficiently. The attention mechanism helps the model focus on relevant parts of the input, allowing better context understanding.
 
@@ -32,9 +32,13 @@ At a lower level, the **perceptron** serves as the basic unit of deep neural net
 
 
 #Methods
-Our approach combines sentence-level encoding with a multi-attention mechanism to classify paragraph-level text. 
 
-This is how our model architecture works:
+Our approach combines sentence-level encoding with a multi-attention mechanism to classify paragraph-level text.
+## RoBERTector
+
+RoBERTector is finetuned RoBerta that specify on AI detection on sentence level. it's predeictive abilitwes were Accuracy: 0.8648  F1 Score: 0.8644 on validation set. 
+
+## Architecture
 
 Sentence Splitting:
 Each paragraph is split into up to three sentences. If there are fewer, padding is applied; if more, we truncate after the third sentence. This ensures consistent input size.
@@ -47,6 +51,64 @@ The sentence embeddings are passed to a multi-attention layer that weighs the im
 
 Final Decision:
 The weighted sentence representations are aggregated into a single vector, which is used to make the final classification through a fully connected layer.
+
+## Architecture
+
+This architecture combines a fine‑tuned sentence encoder (“RoBERTector”) with a lightweight, attention‑based paragraph aggregator to achieve strong AI vs. human text classification.
+
+---
+
+## 1. Sentence‑Level Expertise  
+- **Pretrained & Fine‑Tuned**  
+  - Each sentence is encoded by RoBERTector, already trained to spot AI‑generated vs. human style at the sentence level.  
+- **Subtle Stylistic Cues**  
+  - Captures token‑level patterns, phrasing, function‑word frequencies, and other hallmarks of AI or human writing.  
+- **Freezing for Stability**  
+  - Freezing the encoder preserves these robust features and prevents overfitting on paragraph data.
+
+---
+
+## 2. Cross‑Sentence Interaction via Multi‑Head Self‑Attention  
+- **Beyond Simple Averaging**  
+  - Sentence embeddings vary in importance—some contain the thesis, topic shifts, or concluding signals.  
+- **Learned Importance Weights**  
+  - Attention heads score every sentence against every other, highlighting the most diagnostic ones.  
+- **Multiple Perspectives**  
+  - Different heads can specialize (e.g., one for discourse markers, another for cohesion, etc.).
+
+---
+
+## 3. Macro‑Pattern Aggregation  
+- **Local + Global Signals**  
+  - Pools the attended sentence embeddings into a single paragraph vector that encodes:  
+    1. **Local signals** (sentence‑level AI/human stylistic cues)  
+    2. **Global structure** (discourse flow, abrupt transitions, uniformity)  
+- **Robust Paragraph Representation**  
+  - Captures both micro‑stylistic and macro‑structural features.
+
+---
+
+## 4. Lightweight Classification Head  
+- **Minimal Parameters**  
+  - A two‑layer MLP with ReLU and dropout maps the paragraph embedding to a binary decision.  
+- **Focused Learning**  
+  - Only the attention and MLP head learn; the heavy transformer remains frozen.
+
+---
+
+## Why It Works Better Than Alternatives  
+1. **Reuses Proven Features**  
+   - Leverages a sentence‑level model already adept at AI vs. human discrimination.  
+2. **Adaptive Sentence Weighting**  
+   - Attention pinpoints the most telling sentences in each paragraph.  
+3. **Models Sentence Interactions**  
+   - Captures contradictions or over‑consistency—common in AI text.  
+4. **Regularization by Freezing**  
+   - Prevents catastrophic forgetting and overfitting on limited paragraph data.  
+
+Together, these components yield higher accuracy and generalization than approaches that either ignore inter‑sentence context or train a full transformer from scratch on small paragraph datasets.  
+
+
 
 ```{r install-python-pkgs, include=FALSE}
 library(reticulate)
