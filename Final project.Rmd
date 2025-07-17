@@ -7,16 +7,22 @@ output:
     latex_engine: xelatex
 ---
 
-
-
 # Introduction
 The original idea on this project was using Sentence Transformers(SBERT, for reference view https://sbert.net/) embedding to classify, human and AI generated text. However this attempt was unsuccessful because features that were extracted from SBERT failed to capture any significant information as shown in t-SNE plot below. Seeing this, choose to fine tune pretrained LLM RoBERTa. 
 
 ![t-SNE plot of SBERT feature](images/TSNE_plot.png)
-Failed attempt
 
 
 ## Theoretical Background
+
+### Perceptrons and Deep Models
+
+### Back propagation and fine tuning
+
+### Transformers and attention mechanism
+
+### RoBERTa and LLM
+
 
 In this study, several foundational concepts in natural language processing and deep learning are used to distinguish between AI- and human-written texts. **RoBERTa**, an improved version of BERT, is employed for its optimized pretraining strategies and enhanced language understanding. The model architecture is based on the **Transformer**, which relies solely on **attention mechanisms** to process sequential data efficiently. The attention mechanism helps the model focus on relevant parts of the input, allowing better context understanding.
 
@@ -29,15 +35,13 @@ At a lower level, the **perceptron** serves as the basic unit of deep neural net
 
 Our approach combines sentence-level encoding with a multi-attention mechanism to classify paragraph-level text. This method is based on our assumption that GPT will have hard time 
 
-## RoBERTector
-
-RoBERTector is finetuned RoBerta that specify on AI detection on sentence level. it's predeictive abilitwes were Accuracy: 0.8648  F1 Score: 0.8644 on validation set. 
 
 ## Architecture
 ![Architecture](images/Architecture.png)
-Model Architecture we use in this project
 
-# Model Architecture in Prose
+### RoBERTector
+
+RoBERTector is finetuned RoBerta that specify on AI detection on sentence level. it's predeictive abilitwes were Accuracy: 0.8648  F1 Score: 0.8644 on validation set. 
 
 Our model begins by **splitting each paragraph** into at most 16 sentences.  We scan for sentence delimiters (`.`, `?`, `!`), trim whitespace, and discard empty fragments.  If a paragraph produces fewer than 16 sentences, we pad the remainder with dummy tokens; if it exceeds 16, we simply truncate after the 16th.  This approach guarantees every input tensor has a fixed shape `(batch_size × 16 × max_length)`, which simplifies batching and avoids dynamic control‐flow overhead.
 
@@ -49,7 +53,9 @@ Finally, a **lightweight classification head** (a two‑layer MLP with ReLU and 
 
 By **reusing** a specialized sentence encoder, **learning** which sentences truly matter via attention, and **regularizing** most of the model by freezing, this architecture achieves high accuracy and generalization while remaining interpretable: attention weights can be visualized to show exactly which sentences drove each classification.
 
-### Set up python enviroment
+# Training
+
+## Set up python enviroment
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
@@ -61,7 +67,7 @@ use_python(
 py_config()
 
 ```
-### Install packages
+## Install packages
 ```{r install-python-pkgs, include=FALSE, eval=FALSE}
 library(reticulate)
 
@@ -77,6 +83,9 @@ if (length(to_install)) {
   py_install(packages = to_install, pip = TRUE)
 }
 ```
+
+## Fine tune RoBERTa
+
 ### Load data and split paragraphs into sentences
 ```{python, eval=FALSE}
 import pandas as pd
@@ -123,7 +132,7 @@ print(f"Test : {len(texts_test)} samples")
 
 ```
 
-# Load Roberta and fine tune
+### Load Roberta and fine tune
 ```{python, eval=FALSE}
 import torch
 from torch.utils.data import DataLoader
@@ -221,7 +230,7 @@ for epoch in range(1, num_epochs+1):
 
 ## Training Multi Attention Layer
 
-### Load packages(Load Roberta and fine tune)
+### Load packages
 ```{python, eval=FALSE}
 import torch
 from torch.utils.data import DataLoader
@@ -485,15 +494,12 @@ model from epoch 3 was chosen.
 
 ## Training Multi Attention layer
 
-
-
 ![learning plot](images/learning_plot_loss.png){width=50%}
 
 ![Accurracy over epochs](images/learning_plot_scores.png){width=50%}
 
 model from epoch 4 was chosen.
 
-## Graph Drawing Using R
 ### Weekly Proportion and its Smooth Line
 ```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
@@ -598,5 +604,4 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
 
 
 
-zxdfcgfcgjfvghhvfdhxtrx
 
