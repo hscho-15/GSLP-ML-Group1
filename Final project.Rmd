@@ -35,7 +35,7 @@ RoBERTector is finetuned RoBerta that specify on AI detection on sentence level.
 ## Architecture
 ![Architecture](images/Architecture.png)
 
-  This model starts from the assumption that main content of the paragraph comes from important sentences in the paragraph. 
+  A paragraph’s “main content” is concentrated in a small subset of its sentences, and by assigning higher attention weights to those key sentences (and down‑weighting the rest), the model can accurately classify the paragraph as AI‑generated vs. human‑written.
 
   Our model begins by **splitting each paragraph** into at most 16 sentences.  We scan for sentence delimiters (`.`, `?`, `!`), trim whitespace, and discard empty fragments.  If a paragraph produces fewer than 16 sentences, we pad the remainder with dummy tokens; if it exceeds 16, we simply truncate after the 16th.  This approach guarantees every input tensor has a fixed shape `(batch_size × 16 × max_length)`, which simplifies batching and avoids dynamic control‐flow overhead.
 
@@ -494,11 +494,8 @@ model from epoch 3 was chosen.
 
 model from epoch 4 was chosen.
 
-<<<<<<< Updated upstream
-=======
-## Graph Drawing Using R
 
->>>>>>> Stashed changes
+## Graph Drawing Using R
 
 ### Weekly Proportion and its Smooth Line
 ```{r, warning = FALSE, message = FALSE}
