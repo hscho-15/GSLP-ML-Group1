@@ -474,23 +474,22 @@ print(f"Test Acc {acc:.4f} | F1 {f1:.4f}")
 
 ## FineTuning
 
-![learning plot on accuracy](images/Robertector_Accuracy.png)
+![learning plot on accuracy](images/Robertector_Accuracy.png){width=50%}
 
 
 
 
-![learning plot on F1 score](images/Robertector_F1.png)
+![learning plot on F1 score](images/Robertector_F1.png){width=50%}
+
 model from epoch 3 was chosen.
 
 ## Training Multi Attention layer
 
 
 
-![learning plot](images/learning_plot_loss.png)
+![learning plot](images/learning_plot_loss.png){width=50%}
 
-![Accurracy over epochs](images/learning_plot_scores.png)
-
-
+![Accurracy over epochs](images/learning_plot_scores.png){width=50%}
 
 model from epoch 4 was chosen.
 
