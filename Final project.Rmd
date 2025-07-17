@@ -24,24 +24,16 @@ The original idea on this project was using Sentence Transformers(SBERT, for ref
 ### RoBERTa and LLM
 
 
-In this study, several foundational concepts in natural language processing and deep learning are used to distinguish between AI- and human-written texts. **RoBERTa**, an improved version of BERT, is employed for its optimized pretraining strategies and enhanced language understanding. The model architecture is based on the **Transformer**, which relies solely on **attention mechanisms** to process sequential data efficiently. The attention mechanism helps the model focus on relevant parts of the input, allowing better context understanding.
-
-At a lower level, the **perceptron** serves as the basic unit of deep neural networks, supporting more complex architectures like multi-layer networks. **Large Language Models (LLMs)**, such as ChatGPT, generate coherent text by predicting word sequences based on prior data. These models are trained using **backpropagation**, a method that calculates gradients using the **chain rule** to adjust model parameters.
-
-**Fine-tuning** is applied to adapt a pre-trained model to a specific dataset, improving task-specific performance. In this project, RoBERTa is fine-tuned to classify U.S. Senate press releases as either human- or AI-generated, utilizing these core principles in a practical application.
-
-
 # Methods
 
 Our approach combines sentence-level encoding with a multi-attention mechanism to classify paragraph-level text. This method is based on our assumption that GPT will have hard time 
 
+## RoBERTector
+
+RoBERTector is finetuned RoBerta that specify on AI detection on sentence level. it's predeictive abilitwes were Accuracy: 0.8648  F1 Score: 0.8644 on validation set. 
 
 ## Architecture
 ![Architecture](images/Architecture.png)
-
-### RoBERTector
-
-RoBERTector is finetuned RoBerta that specify on AI detection on sentence level. it's predeictive abilitwes were Accuracy: 0.8648  F1 Score: 0.8644 on validation set. 
 
 Our model begins by **splitting each paragraph** into at most 16 sentences.  We scan for sentence delimiters (`.`, `?`, `!`), trim whitespace, and discard empty fragments.  If a paragraph produces fewer than 16 sentences, we pad the remainder with dummy tokens; if it exceeds 16, we simply truncate after the 16th.  This approach guarantees every input tensor has a fixed shape `(batch_size × 16 × max_length)`, which simplifies batching and avoids dynamic control‐flow overhead.
 
