@@ -500,7 +500,16 @@ model from epoch 3 was chosen.
 
 model from epoch 4 was chosen.
 
+<<<<<<< Updated upstream
+=======
+## Graph Drawing Using R
+
+>>>>>>> Stashed changes
 ### Weekly Proportion and its Smooth Line
+![Weekly proportion and its smooth trend](images/weekly_smooth.png){width=50%}
+
+  This graph shows 
+
 ```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(lubridate)
@@ -544,6 +553,8 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
 
 
 ### Average of Pre-GPT, Post_GPT
+![Mean of pre-GPT and post-GPT weekly proportion](images/weekly_mean.png){width=50%}
+
 ```{r, warning = FALSE, message = FALSE}
 # Calculate Pre/Post GPT Means
 pre_mean <- mean(df_pre_gpt$prediction)
@@ -571,6 +582,8 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
 
 
 ### Linear Regression of Post-GPT
+![Weekly proportion and post-GPT linear regression model](images/weekly_lm.png){width=50%}
+
 ```{r, warning = FALSE, message = FALSE}
 # Dataframe Storing Post GPT's ChatGPT Proportion
 df_post_mean <- df_mean %>% filter(Week > gpt_date)
