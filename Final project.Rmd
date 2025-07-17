@@ -27,7 +27,7 @@ At a lower level, the **perceptron** serves as the basic unit of deep neural net
 
 # Methods
 
-Our approach combines sentence-level encoding with a multi-attention mechanism to classify paragraph-level text.
+Our approach combines sentence-level encoding with a multi-attention mechanism to classify paragraph-level text. This method is based on our assumption that GPT will have hard time 
 
 ## RoBERTector
 
