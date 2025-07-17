@@ -497,11 +497,8 @@ model from epoch 4 was chosen.
 ## Graph Drawing Using R
 
 >>>>>>> Stashed changes
+
 ### Weekly Proportion and its Smooth Line
-![Weekly proportion and its smooth trend](images/weekly_smooth.png){width=50%}
-
-  This graph shows 
-
 ```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(lubridate)
@@ -542,11 +539,11 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
        color = "Legend")
 
 ```
-
+![Weekly proportion and its smooth trend](images/weekly_smooth.png){width=50%}
+  This graph shows the distribution of the weekly proportion of paragraphs predicted as ChatGPT by RoBERTector. In this graph, blue horizontal line indicates the time that ChatGPT was firsh released, and red line is the smooth trend line of distribution. As you can see from the graph, after ChatGPT, the trend of weekly propotion seems to increase.
+  
 
 ### Average of Pre-GPT, Post_GPT
-![Mean of pre-GPT and post-GPT weekly proportion](images/weekly_mean.png){width=50%}
-
 ```{r, warning = FALSE, message = FALSE}
 # Calculate Pre/Post GPT Means
 pre_mean <- mean(df_pre_gpt$prediction)
@@ -571,11 +568,11 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
        caption = "Data Source: James Jolin, Ethan Josny",
        color = "Legend")
 ```
+![Mean of pre-GPT and post-GPT weekly proportion](images/weekly_mean.png){width=50%}
+  This graph shows the mean of ChatGPT-classified paragraph proportion in post-GPT(pink line), pre-GPT period(skyblue line). The mean of paragraph proportion in pre-GPT period recorded 0.004231799, and 0.008446278 in post-GPT period. It shows that the proportion increased after official release of ChatGPT.
 
 
 ### Linear Regression of Post-GPT
-![Weekly proportion and post-GPT linear regression model](images/weekly_lm.png){width=50%}
-
 ```{r, warning = FALSE, message = FALSE}
 # Dataframe Storing Post GPT's ChatGPT Proportion
 df_post_mean <- df_mean %>% filter(Week > gpt_date)
@@ -606,6 +603,8 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
        caption = "Data Source: James Jolin, Ethan Josny",
        color = "Legend")
 ```
+![Weekly proportion and post-GPT linear regression model](images/weekly_lm.png){width=50%}
+  This graph shows the distribution of weekly proportioin of paragraphs which is predicted as ChatGPT, with its linear regression model fitted with post-GPT period data. Equation of linear regression model was approximately $\text{Proportion} = 1.808295\times10^{-5} × \text{Week} - 3.449049\times10^{-1}$. The coefficient of "Week" variable was positive, so we can conclude that usage of ChatGPT in U. S. Senate press releases has been increasing since the release of ChatGPT.
 
 
 
