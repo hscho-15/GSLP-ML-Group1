@@ -48,7 +48,7 @@ By **reusing** a specialized sentence encoder, **learning** which sentences trul
 # Training
 
 ## Set up python enviroment
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning = FALSE, message = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
 
@@ -60,7 +60,7 @@ py_config()
 
 ```
 ## Install packages
-```{r install-python-pkgs, include=FALSE, eval=FALSE}
+```{r install-python-pkgs, include=FALSE, eval=FALSE, warning = FALSE, message = FALSE}
 library(reticulate)
 
 # packages to install
@@ -79,7 +79,7 @@ if (length(to_install)) {
 ## Fine tune RoBERTa
 
 ### Load data and split paragraphs into sentences
-```{python, eval=FALSE}
+```{python, eval=FALSE, warning = FALSE, message = FALSE}
 import pandas as pd
 df=pd.read_csv('/kaggle/input/ai-text/ai_press_releases.csv')
 df=df.dropna()
@@ -125,7 +125,7 @@ print(f"Test : {len(texts_test)} samples")
 ```
 
 ### Load Roberta and fine tune
-```{python, eval=FALSE}
+```{python, eval=FALSE, warning = FALSE, message = FALSE}
 import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -223,7 +223,7 @@ for epoch in range(1, num_epochs+1):
 ## Training Multi Attention Layer
 
 ### Load packages
-```{python, eval=FALSE}
+```{python, eval=FALSE, warning = FALSE, message = FALSE}
 import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -247,7 +247,7 @@ set_seed(42)
 ```
 
 ### Load data
-```{python, eval=FALSE}
+```{python, eval=FALSE, warning = FALSE, message = FALSE}
 df=pd.read_csv('/kaggle/input/ai-text/ai_press_releases.csv')
 df=df.dropna()
 human=df['non_chat_gpt_press_release'].to_list()
@@ -280,7 +280,7 @@ print(f"Test : {len(texts_test)} samples")
 
 ### Define helper and Multiattention layer class
 
-```{python, eval=FALSE}
+```{python, eval=FALSE, warning = FALSE, message = FALSE}
 # 2. Sentence split
 def split_sentences(paragraph: str):
     return [s.strip() for s in paragraph.split('. ') if s.strip()]
@@ -371,7 +371,7 @@ class HierAttnClassifier(nn.Module):
 
 ### Load RoBERTector and set up hyperparameters
 
-```{python, eval=FALSE}
+```{python, eval=FALSE, warning = FALSE, message = FALSE}
 # 5. Prepare data, loaders, model, optimizer
 model_path = "/kaggle/input/robertector/transformers/sentences/1/checkpoint-epoch3"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -401,7 +401,7 @@ criterion = nn.BCEWithLogitsLoss()# Use binary cross-entropy loss with logits fo
 ```
 
 ### Train Multi Attention Layer
-```{python, eval=FALSE}
+```{python, eval=FALSE, warning = FALSE, message = FALSE}
 from tqdm.auto import tqdm
 
 num_epochs = 6
