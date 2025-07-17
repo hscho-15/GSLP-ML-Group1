@@ -493,6 +493,109 @@ model from epoch 3 was chosen.
 
 model from epoch 4 was chosen.
 
+## Graph Drawing Using R
+### Weekly Proportion and its Smooth Line
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(lubridate)
+
+# Load and Preprocess Data
+df <- read_csv("data/prob.csv")
+
+# Invert Probabilities (AI = 1, Human = 0)
+df <- df %>%
+  mutate(probability = 1 - probability,
+         prediction = 1 - prediction,
+         Week = floor_date(as.Date(Date), unit = "week"))
+
+# Weekly Mean Calculation
+df_mean <- df %>%
+  group_by(Week) %>%
+  summarise(mean_chatgpt = mean(prediction), .groups = "drop")
+
+# GPT Release Date
+gpt_date <- floor_date(as.Date("2022-11-21"), unit = "week")
+
+# Subsets for Pre and Post-GPT
+df_pre_gpt <- df %>% filter(Week <= gpt_date)
+df_post_gpt <- df %>% filter(Week > gpt_date)
+
+# Plot 1: Smoothed Trend Line with Points
+ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
+  geom_point(color = "gray") +
+  geom_vline(xintercept = gpt_date, color = "blue") +
+  geom_smooth(aes(color = "Smooth Trend"), se = TRUE) +
+  scale_color_manual(values = c("Smooth Trend" = "red")) +
+  coord_cartesian(ylim = c(0, 0.05)) +
+  theme_minimal() +
+  labs(x = "Week",
+       y = "Proportion of ChatGPT Paragraphs",
+       title = "Weekly Proportion of Paragraphs Predicted as ChatGPT",
+       caption = "Data Source: James Jolin, Ethan Josny",
+       color = "Legend")
+
+```
+
+
+### Average of Pre-GPT, Post_GPT
+```{r, warning = FALSE, message = FALSE}
+# Calculate Pre/Post GPT Means
+pre_mean <- mean(df_pre_gpt$prediction)
+post_mean <- mean(df_post_gpt$prediction)
+
+# Plot 2: Pre/Post GPT Mean Lines
+ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
+  geom_segment(aes(x = min(Week), xend = gpt_date,
+                   y = pre_mean, yend = pre_mean, color = "Pre-GPT Mean"),
+               size = 1.2) +
+  geom_segment(aes(x = gpt_date, xend = max(Week),
+                   y = post_mean, yend = post_mean, color = "Post-GPT Mean"),
+               size = 1.2) +
+  scale_color_manual(values = c("Pre-GPT Mean" = "skyblue", "Post-GPT Mean" = "pink")) +
+  geom_point(color = "gray") +
+  geom_vline(xintercept = gpt_date, color = "blue") +
+  coord_cartesian(ylim = c(0, 0.05)) +
+  theme_minimal() +
+  labs(x = "Week",
+       y = "Proportion of ChatGPT Sentences",
+       title = "Mean of Weekly Proportion of Sentences Predicted as ChatGPT",
+       caption = "Data Source: James Jolin, Ethan Josny",
+       color = "Legend")
+```
+
+
+### Linear Regression of Post-GPT
+```{r, warning = FALSE, message = FALSE}
+# Dataframe Storing Post GPT's ChatGPT Proportion
+df_post_mean <- df_mean %>% filter(Week > gpt_date)
+
+# Linear Regression Model
+model <- lm(mean_chatgpt ~ Week, data = df_post_mean)
+co <- coef(model)
+
+# Stores Linear Regression's Estimation Result
+df_post_mean <- cbind(df_post_mean, predict(model, interval = 'confidence'))
+
+# Get's Linear Model's Equation
+equation <- paste("prop =", round(co[2], 6), "× Week +", round(co[1], 2))
+legend_label <- paste("Post-GPT Trend\n(", equation, ")", sep = "")
+df_post_mean$legend <- legend_label
+
+# Plot 3: Linear Regression After GPT Release
+ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
+  geom_point(color = "gray") +
+  geom_vline(xintercept = gpt_date, color = "blue") +
+  geom_line(data = df_post_mean, aes(x = Week, y = fit, color = legend), size = 1.2) +
+  scale_color_manual(values = setNames("red", legend_label)) +
+  coord_cartesian(ylim = c(0, 0.05)) +
+  theme_minimal() +
+  labs(x = "Week",
+       y = "Proportion of ChatGPT Paragraphs",
+       title = "Weekly Proportion of Paragraphs Predicted as ChatGPT",
+       caption = "Data Source: James Jolin, Ethan Josny",
+       color = "Legend")
+```
+
 
 
 zxdfcgfcgjfvghhvfdhxtrx
