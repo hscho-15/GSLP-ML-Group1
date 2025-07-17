@@ -35,7 +35,14 @@ RoBERTector is finetuned RoBerta that specify on AI detection on sentence level.
 ## Architecture
 ![Architecture](images/Architecture.png)
 
-  A paragraph’s “main content” is concentrated in a small subset of its sentences, and by assigning higher attention weights to those key sentences (and down‑weighting the rest), the model can accurately classify the paragraph as AI‑generated vs. human‑written.
+  A paragraph’s “main content” is concentrated in a small subset of its sentences, and by assigning higher attention weights to those key sentences (and down‑weighting the rest), the model can accurately classify the paragraph as AI‑generated vs. human‑written. This main content is valid because of various point of view, psycholingustics, cognitive science, deep-learning.
+
+### Psycholingustic Perspective
+  People tend to focus on main point of view instead of remembering all details. This is because gist information is more efficiently encoded, thereby being meaningful into memory. People prefer the most meaningful portion of the text, so people usually remember the main idea most. Also, according to Van Dijk and Kintsch's discourse comprehension theory, people are reported to remember contents by compressing and generalizing to macro-level semantic structure (gist). 
+
+### Perspective in Cognitive Science
+  It is proved in cognitive science fields that people get their attention on main ideas. Our cognitive system processes and emphasizes data selectively rather than catching full context at once. For example, when we write essays, people usually loads the most information, main idea, into the first sentence or paragraph.
+ 
 
   Our model begins by **splitting each paragraph** into at most 16 sentences.  We scan for sentence delimiters (`.`, `?`, `!`), trim whitespace, and discard empty fragments.  If a paragraph produces fewer than 16 sentences, we pad the remainder with dummy tokens; if it exceeds 16, we simply truncate after the 16th.  This approach guarantees every input tensor has a fixed shape `(batch_size × 16 × max_length)`, which simplifies batching and avoids dynamic control‐flow overhead.
 
