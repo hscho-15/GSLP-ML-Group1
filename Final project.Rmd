@@ -13,6 +13,8 @@ output:
 The original idea on this project was using Sentence Transformers(SBERT, for reference view https://sbert.net/) embedding to classify, human and AI generated text. However this attempt was unsuccessful because features that were extracted from SBERT failed to capture any significant information as shown in t-SNE plot below. Seeing this, choose to fine tune pretrained LLM RoBERTa. 
 
 ![t-SNE plot of SBERT feature](images/TSNE_plot.png)
+Failed attempt
+
 
 ## Theoretical Background
 
@@ -33,6 +35,8 @@ RoBERTector is finetuned RoBerta that specify on AI detection on sentence level.
 
 ## Architecture
 ![Architecture](images/Architecture.png)
+Model Architecture we use in this project
+
 # Model Architecture in Prose
 
 Our model begins by **splitting each paragraph** into at most 16 sentences.  We scan for sentence delimiters (`.`, `?`, `!`), trim whitespace, and discard empty fragments.  If a paragraph produces fewer than 16 sentences, we pad the remainder with dummy tokens; if it exceeds 16, we simply truncate after the 16th.  This approach guarantees every input tensor has a fixed shape `(batch_size × 16 × max_length)`, which simplifies batching and avoids dynamic control‐flow overhead.
@@ -217,7 +221,7 @@ for epoch in range(1, num_epochs+1):
 
 ## Training Multi Attention Layer
 
-### Load packages
+### Load packages(Load Roberta and fine tune)
 ```{python, eval=FALSE}
 import torch
 from torch.utils.data import DataLoader
@@ -250,20 +254,20 @@ ai=df['chat_gpt_generated_release'].to_list()
 labels=[0 if i<len(ai) else 1 for i in range(len(ai)+len(human))]
 ai.extend(human)
 texts=ai
-# 1) 먼저 train_temp(80%)와 test(20%) 분할
+# 1)split train_temp(80%) and test(20%)
 texts_train_val, texts_test, labels_train_val, labels_test = train_test_split(
     texts,
     labels,
-    test_size=0.2,       # 전체의 20%
+    test_size=0.2,       # 20% of the total
     random_state=42,
-    stratify=labels      # 레이블 비율 유지
+    stratify=labels      # Maintain label distribution
 )
 
-# 2) train_temp을 다시 train(75% of temp → 60% 전체)와 val(25% of temp → 20% 전체)로 분할
+# 2) Split train_temp again into train (75% of temp → 60% of the total) and val (25% of temp → 20% of the total)
 texts_train, texts_val, labels_train, labels_val = train_test_split(
     texts_train_val,
     labels_train_val,
-    test_size=0.25,      # train_temp의 25% → 전체의 0.2
+    test_size=0.25,      #25% of train_temp → 0.2 of total
     random_state=42,
     stratify=labels_train_val
 )
@@ -379,17 +383,19 @@ tokenizer = AutoTokenizer.from_pretrained(model_path)
 model = AutoModelForSequenceClassification.from_pretrained(model_path).to(device)
 dataset = ParagraphDataset(texts, labels, tokenizer)
 n = len(dataset)
-
+# Split the dataset into training (60%), validation (20%), and test (20%) sets
 train_n = int(0.6*n); val_n = int(0.2*n); test_n = n - train_n - val_n
 train_ds, val_ds, test_ds = random_split(dataset, [train_n, val_n, test_n])
+
+# Wrap the datasets with PyTorch DataLoader for mini-batch training and parallel data loading
 train_loader = DataLoader(train_ds, batch_size=64, shuffle=True, num_workers=2)
 val_loader   = DataLoader(val_ds, batch_size=64, num_workers=2)
 test_loader  = DataLoader(test_ds, batch_size=64, num_workers=2)
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = HierAttnClassifier().to(device)
-opt = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-4)
-criterion = nn.BCEWithLogitsLoss()
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')# Define the device again (potentially redundant)
+model = HierAttnClassifier().to(device)# Initialize a custom hierarchical attention-based classifier model
+opt = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-4)# Use AdamW optimizer with only the trainable parameters
+criterion = nn.BCEWithLogitsLoss()# Use binary cross-entropy loss with logits for multi-label classification
 
 ```
 
@@ -398,16 +404,18 @@ criterion = nn.BCEWithLogitsLoss()
 from tqdm.auto import tqdm
 
 num_epochs = 6
-os.makedirs('/kaggle/working/ckpts', exist_ok=True)
+os.makedirs('/kaggle/working/ckpts', exist_ok=True) # Directory to save model checkpoints
+
 
 for epoch in range(1, num_epochs + 1):
     # ── TRAIN ───────────────────────────────────────────────
-    model.train()
+    model.train()  # Set model to training mode
     train_loss_sum = 0.0
     train_steps    = 0
     loop = tqdm(train_loader, desc=f"Train E{epoch}")
-    for ids, mask, lbl in loop:
+    for ids, mask, lbl in loop: 
         ids, mask, lbl = ids.to(device), mask.to(device), lbl.to(device)
+        # Move input IDs, attention masks, and labels to the correct device
         opt.zero_grad()
         logits = model(ids, mask)
         loss   = criterion(logits, lbl)
@@ -416,27 +424,28 @@ for epoch in range(1, num_epochs + 1):
 
         train_loss_sum += loss.item()
         train_steps    += 1
-        # tqdm 바에 현재 배치 손실 표시
-        loop.set_postfix(loss=f"{loss.item():.4f}")
+        # Display current batch loss on the tqdm progress bar
+        loop.set_postfix(loss=f"{loss.item():.4f}")  # Update progress bar with current batch loss
 
     avg_train_loss = train_loss_sum / train_steps
     print(f"Epoch {epoch} | Train Loss: {avg_train_loss:.4f}")
 
     # ── VALIDATION ─────────────────────────────────────────
-    model.eval()
+    model.eval()  # Set model to evaluation mode
     val_loss_sum = 0.0
     preds, trues = [], []
-    with torch.no_grad():
+    with torch.no_grad():  # Disable gradient calculation for validation
         for ids, mask, lbl in val_loader:
             ids, mask, lbl = ids.to(device), mask.to(device), lbl.to(device)
             logits = model(ids, mask)
             loss   = criterion(logits, lbl)
             val_loss_sum += loss.item()
+             # Apply sigmoid and threshold at 0.5 to get binary predictions
             preds += (torch.sigmoid(logits) > 0.5).cpu().int().tolist()
             trues += lbl.cpu().int().tolist()
-    avg_val_loss = val_loss_sum / len(val_loader)
-    acc = accuracy_score(trues, preds)
-    f1  = f1_score(trues, preds)
+    avg_val_loss = val_loss_sum / len(val_loader)  # Average validation loss
+    acc = accuracy_score(trues, preds)             # Accuracy metric
+    f1  = f1_score(trues, preds)                   # F1 score (macro or binary depending on usage)
     print(f"Epoch {epoch} | Val Loss: {avg_val_loss:.4f} | Acc: {acc:.4f} | F1: {f1:.4f}")
 
     # ── CHECKPOINT SAVE ────────────────────────────────────
@@ -445,16 +454,18 @@ for epoch in range(1, num_epochs + 1):
     print(f"Saved checkpoint: {checkpoint_path}")
 
 # ── FINAL TEST ────────────────────────────────────────────
-model.load_state_dict(torch.load('/kaggle/working/ckpts/epoch6.pt'))
+model.load_state_dict(torch.load('/kaggle/working/ckpts/epoch6.pt'))  
 model.eval()
 preds, trues = [], []
-with torch.no_grad():
+with torch.no_grad():   # No gradient calculation needed during evaluation
     for ids, mask, lbl in test_loader:
         ids, mask, lbl = ids.to(device), mask.to(device), lbl.to(device)
         logits = model(ids, mask)
         preds += (torch.sigmoid(logits) > 0.5).cpu().int().tolist()
         trues += lbl.cpu().int().tolist()
-acc = accuracy_score(trues, preds)
+        
+# Compute final test metrics
+acc = accuracy_score(trues, preds)   
 f1  = f1_score(trues, preds)
 print(f"Test Acc {acc:.4f} | F1 {f1:.4f}")
 ```
@@ -464,6 +475,10 @@ print(f"Test Acc {acc:.4f} | F1 {f1:.4f}")
 ## FineTuning
 
 ![learning plot on accuracy](images/Robertector_Accuracy.png)
+
+
+
+
 ![learning plot on F1 score](images/Robertector_F1.png)
 model from epoch 3 was chosen.
 
@@ -474,6 +489,9 @@ model from epoch 3 was chosen.
 ![learning plot](images/learning_plot_loss.png)
 
 ![Accurracy over epochs](images/learning_plot_scores.png)
+
+
+
 model from epoch 4 was chosen.
 
 
