@@ -25,7 +25,7 @@ $$z = \sum_i w_i x_i + b$$
 ### MLP, Back propagation and fine tuning
 |  MLP is a deep model that extend single perceptrons by adding hidden layers with nonlinear activation functions. MLPs with sufficient hidden units can approximate any continuous function.
 ![Structure of MLP](images/MLP.webp)
-|  Backpropagation training is a method that uses gradient descent to train multiple-layer perceptrons. It starts with changing the last hidden layers, and proceeds like optimizing the values towards input layers, by using the values used at step before.
+| Fine-tuning is a supervised adaptation to specific tasks, where a pretrained model is further trained on labeled data to specialize in a narrower domain or objective. 
 
 
 ### Transformers and attention mechanism
@@ -34,9 +34,9 @@ $$\text{Attention(}Q,K,V\text{)}=\text{softmax(}\frac{QK^T}{\sqrt{d_k}}\text{)} 
 |  Transformers is an sequence modeling system that relys entirely on attention mechanisms, which allows the models to attend to different positions in the input sequence simultaneously.
 |  It uses encoder-decoder architecture, which consists of both encoder and decoder components, though variations exist. In addition, transformer's don't have inherent sequential processing, so positional information is added via endcodings in transformer.
 
-### BERT and RoBERTa
+### LLM, BERT and RoBERTa
+|  Large Language Model(LLM)is a class of neural networks trained on vast amounts of text data to understand and generate human language. It is build on the transformer model with self-attention mechanisms. Also, it uses autoregressive generation, which predicts the next token in a sequence based on previous tokens. LLM training is held through pre-training(unsupervised learning on large text corpora), fine-tuning(supervised adaptation to specific tasks), in-context learning(learning from examplex provided in the input).
 | BERT is an LLM, large language model that represents a paradigm shift in natural language processing by introducing bidirectional training for language representations. BERT also uses masked language modeling(MLM), by using a novel pre-trained objective where some tokens are randomly masked and the model predicts them. In addition, BERT utilizes transformer encoder architecture and transfer learning to enhance its performance.
-
 |  RoBERTa (Robustly Optimized BERT Pretraining Approach) is an enhanced version of BERT that builds on the transformer architecture with these several key improvements:
 |  Dynamic Masking: Unlike BERT's static masking, RoBERTa uses dynamic masking to generate different masked tokens for the same sentence during training, allowing the model to learn from various input sequences.
 |  Removal of Next Sentence Prediction (NSP): RoBERTa eliminates the NSP task, focusing solely on the Masked Language Modeling (MLM) objective.
