@@ -35,15 +35,17 @@ RoBERTector is finetuned RoBerta that specify on AI detection on sentence level.
 ## Architecture
 ![Architecture](images/Architecture.png)
 
-Our model begins by **splitting each paragraph** into at most 16 sentences.  We scan for sentence delimiters (`.`, `?`, `!`), trim whitespace, and discard empty fragments.  If a paragraph produces fewer than 16 sentences, we pad the remainder with dummy tokens; if it exceeds 16, we simply truncate after the 16th.  This approach guarantees every input tensor has a fixed shape `(batch_size × 16 × max_length)`, which simplifies batching and avoids dynamic control‐flow overhead.
+  This model starts from the assumption that main content of the paragraph comes from important sentences in the paragraph. 
 
-Next, each of these up to 16 sentence slots is **encoded independently** by RoBERTector(a RoBERTa model that was previously fine‑tuned on sentence‑level AI vs. human text classification).  By freezing all of RoBERTector’s parameters, we preserve its robust ability to capture subtle stylistic and lexical cues (word choice, phrasing patterns, function‐word frequencies) without risking over‑fitting on our comparatively small paragraph dataset.  From each sentence’s transformer output we extract the `CLS` token embedding (a 768‑dimensional vector), producing a tensor of shape `(batch_size, 16, 768)`.
+  Our model begins by **splitting each paragraph** into at most 16 sentences.  We scan for sentence delimiters (`.`, `?`, `!`), trim whitespace, and discard empty fragments.  If a paragraph produces fewer than 16 sentences, we pad the remainder with dummy tokens; if it exceeds 16, we simply truncate after the 16th.  This approach guarantees every input tensor has a fixed shape `(batch_size × 16 × max_length)`, which simplifies batching and avoids dynamic control‐flow overhead.
 
-These 16 sentence embeddings are then fed into a **multi‑head self‑attention layer** (four heads, embed_dim=768).  Because the Query, Key, and Value all derive from the same set of sentence embeddings, the attention mechanism learns to assign higher weights to the most informative sentences—thesis statements, topic transitions, or discourse markers—while down‑weighting less relevant ones.  The attended outputs are mean‑pooled across the sentence axis, yielding a single 768‑dimensional “paragraph embedding” that fuses both micro‑level sentence cues and macro‑level discourse structure.
+  Next, each of these up to 16 sentence slots is **encoded independently** by RoBERTector(a RoBERTa model that was previously fine‑tuned on sentence‑level AI vs. human text classification).  By freezing all of RoBERTector’s parameters, we preserve its robust ability to capture subtle stylistic and lexical cues (word choice, phrasing patterns, function‐word frequencies) without risking over‑fitting on our comparatively small paragraph dataset.  From each sentence’s transformer output we extract the `CLS` token embedding (a 768‑dimensional vector), producing a tensor of shape `(batch_size, 16, 768)`.
 
-Finally, a **lightweight classification head** (a two‑layer MLP with ReLU and dropout) maps this paragraph embedding to a single logit.  We apply `BCEWithLogitsLoss` during training—combining sigmoid activation and binary cross‑entropy in a numerically stable way—and use a 0.5 threshold on the sigmoid probability to make the AI vs. human decision.  We train only the attention and MLP head (leaving RoBERTector frozen), save model checkpoints after every epoch, and evaluate on an 80/10/10 train/val/test split of our ~20 000‑paragraph dataset (with test performed just once at the end).
+  These 16 sentence embeddings are then fed into a **multi‑head self‑attention layer** (four heads, embed_dim=768).  Because the Query, Key, and Value all derive from the same set of sentence embeddings, the attention mechanism learns to assign higher weights to the most informative sentences—thesis statements, topic transitions, or discourse markers—while down‑weighting less relevant ones.  The attended outputs are mean‑pooled across the sentence axis, yielding a single 768‑dimensional “paragraph embedding” that fuses both micro‑level sentence cues and macro‑level discourse structure.
 
-By **reusing** a specialized sentence encoder, **learning** which sentences truly matter via attention, and **regularizing** most of the model by freezing, this architecture achieves high accuracy and generalization while remaining interpretable: attention weights can be visualized to show exactly which sentences drove each classification.
+  Finally, a **lightweight classification head** (a two‑layer MLP with ReLU and dropout) maps this paragraph embedding to a single logit.  We apply `BCEWithLogitsLoss` during training—combining sigmoid activation and binary cross‑entropy in a numerically stable way—and use a 0.5 threshold on the sigmoid probability to make the AI vs. human decision.  We train only the attention and MLP head (leaving RoBERTector frozen), save model checkpoints after every epoch, and evaluate on an 80/10/10 train/val/test split of our ~20 000‑paragraph dataset (with test performed just once at the end).
+
+  By **reusing** a specialized sentence encoder, **learning** which sentences truly matter via attention, and **regularizing** most of the model by freezing, this architecture achieves high accuracy and generalization while remaining interpretable: attention weights can be visualized to show exactly which sentences drove each classification.
 
 # Training
 
@@ -53,7 +55,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
 
 use_python(
-  "C:/Users/ahnd6/AppData/Local/Programs/Python/Python39/python.exe", #use your own path to python
+  "C:/Users/User/AppData/Local/Programs/Python/Python311/python.exe", #use your own path to python
   required = TRUE
 )
 py_config()
@@ -540,7 +542,7 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
 
 ```
 ![Weekly proportion and its smooth trend](images/weekly_smooth.png){width=50%}
-  This graph shows the distribution of the weekly proportion of paragraphs predicted as ChatGPT by RoBERTector. In this graph, blue horizontal line indicates the time that ChatGPT was firsh released, and red line is the smooth trend line of distribution. As you can see from the graph, after ChatGPT, the trend of weekly propotion seems to increase.
+  This graph shows the **distribution of the weekly proportion of paragraphs predicted as ChatGPT** by RoBERTector. In this graph, blue horizontal line indicates the time that ChatGPT was firsh released, and red line is the smooth trend line of distribution. As you can see from the graph, after ChatGPT, the trend of weekly propotion seems to increase.
   
 
 ### Average of Pre-GPT, Post_GPT
@@ -569,7 +571,7 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
        color = "Legend")
 ```
 ![Mean of pre-GPT and post-GPT weekly proportion](images/weekly_mean.png){width=50%}
-  This graph shows the mean of ChatGPT-classified paragraph proportion in post-GPT(pink line), pre-GPT period(skyblue line). The mean of paragraph proportion in pre-GPT period recorded 0.004231799, and 0.008446278 in post-GPT period. It shows that the proportion increased after official release of ChatGPT.
+  This graph shows the **mean of ChatGPT-classified paragraph proportion** in post-GPT(pink line), pre-GPT period(skyblue line). The mean of paragraph proportion in pre-GPT period recorded 0.004231799, and 0.008446278 in post-GPT period. It shows that the proportion increased after official release of ChatGPT.
 
 
 ### Linear Regression of Post-GPT
@@ -604,7 +606,7 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
        color = "Legend")
 ```
 ![Weekly proportion and post-GPT linear regression model](images/weekly_lm.png){width=50%}
-  This graph shows the distribution of weekly proportioin of paragraphs which is predicted as ChatGPT, with its linear regression model fitted with post-GPT period data. Equation of linear regression model was approximately $\text{Proportion} = 1.808295\times10^{-5} × \text{Week} - 3.449049\times10^{-1}$. The coefficient of "Week" variable was positive, so we can conclude that usage of ChatGPT in U. S. Senate press releases has been increasing since the release of ChatGPT.
+  This graph shows the distribution of weekly proportioin of paragraphs which is predicted as ChatGPT, with its **linear regression model** fitted with post-GPT period data. Equation of linear regression model was approximately $\text{Proportion} = 1.808295\times10^{-5} × \text{Week} - 3.449049\times10^{-1}$. The coefficient of "Week" variable was positive, so we can conclude that usage of ChatGPT in U. S. Senate press releases has been increasing since the release of ChatGPT.
 
 
 

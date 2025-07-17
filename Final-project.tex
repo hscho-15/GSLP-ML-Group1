@@ -140,37 +140,13 @@ mechanism}\label{transformers-and-attention-mechanism}
 
 \subsubsection{RoBERTa and LLM}\label{roberta-and-llm}
 
-In this study, several foundational concepts in natural language
-processing and deep learning are used to distinguish between AI- and
-human-written texts. \textbf{RoBERTa}, an improved version of BERT, is
-employed for its optimized pretraining strategies and enhanced language
-understanding. The model architecture is based on the
-\textbf{Transformer}, which relies solely on \textbf{attention
-mechanisms} to process sequential data efficiently. The attention
-mechanism helps the model focus on relevant parts of the input, allowing
-better context understanding.
-
-At a lower level, the \textbf{perceptron} serves as the basic unit of
-deep neural networks, supporting more complex architectures like
-multi-layer networks. \textbf{Large Language Models (LLMs)}, such as
-ChatGPT, generate coherent text by predicting word sequences based on
-prior data. These models are trained using \textbf{backpropagation}, a
-method that calculates gradients using the \textbf{chain rule} to adjust
-model parameters.
-
-\textbf{Fine-tuning} is applied to adapt a pre-trained model to a
-specific dataset, improving task-specific performance. In this project,
-RoBERTa is fine-tuned to classify U.S. Senate press releases as either
-human- or AI-generated, utilizing these core principles in a practical
-application.
-
 \section{Methods}\label{methods}
 
 Our approach combines sentence-level encoding with a multi-attention
 mechanism to classify paragraph-level text. This method is based on our
 assumption that GPT will have hard time
 
-\subsubsection{RoBERTector}\label{robertector}
+\subsection{RoBERTector}\label{robertector}
 
 RoBERTector is finetuned RoBerta that specify on AI detection on
 sentence level. it's predeictive abilitwes were Accuracy: 0.8648 F1
@@ -183,6 +159,9 @@ Score: 0.8644 on validation set.
 \pandocbounded{\includegraphics[keepaspectratio]{images/Architecture.png}}
 \caption{Architecture}
 \end{figure}
+
+This model starts from the assumption that main content of the paragraph
+comes from important sentences in the paragraph.
 
 Our model begins by \textbf{splitting each paragraph} into at most 16
 sentences. We scan for sentence delimiters (\texttt{.}, \texttt{?},
@@ -699,8 +678,7 @@ Updated upstream}\label{updated-upstream}
 \begin{quote}
 \begin{quote}
 \begin{quote}
-Stashed changes \#\#\# Weekly Proportion and its Smooth Line
-\includegraphics[width=0.5\linewidth,height=\textheight,keepaspectratio]{images/weekly_smooth.png}
+Stashed changes
 \end{quote}
 \end{quote}
 \end{quote}
@@ -709,7 +687,8 @@ Stashed changes \#\#\# Weekly Proportion and its Smooth Line
 \end{quote}
 \end{quote}
 
-This graph shows
+\subsubsection{Weekly Proportion and its Smooth
+Line}\label{weekly-proportion-and-its-smooth-line}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -754,15 +733,16 @@ This graph shows
 \end{Shaded}
 
 \pandocbounded{\includegraphics[keepaspectratio]{Final-project_files/figure-latex/unnamed-chunk-8-1.pdf}}
+\includegraphics[width=0.5\linewidth,height=\textheight,keepaspectratio]{images/weekly_smooth.png}
+This graph shows the \textbf{distribution of the weekly proportion of
+paragraphs predicted as ChatGPT} by RoBERTector. In this graph, blue
+horizontal line indicates the time that ChatGPT was firsh released, and
+red line is the smooth trend line of distribution. As you can see from
+the graph, after ChatGPT, the trend of weekly propotion seems to
+increase.
 
 \subsubsection{Average of Pre-GPT,
 Post\_GPT}\label{average-of-pre-gpt-post_gpt}
-
-\begin{figure}
-\centering
-\includegraphics[width=0.5\linewidth,height=\textheight,keepaspectratio]{images/weekly_mean.png}
-\caption{Mean of pre-GPT and post-GPT weekly proportion}
-\end{figure}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -792,15 +772,15 @@ Post\_GPT}\label{average-of-pre-gpt-post_gpt}
 \end{Shaded}
 
 \pandocbounded{\includegraphics[keepaspectratio]{Final-project_files/figure-latex/unnamed-chunk-9-1.pdf}}
+\includegraphics[width=0.5\linewidth,height=\textheight,keepaspectratio]{images/weekly_mean.png}
+This graph shows the \textbf{mean of ChatGPT-classified paragraph
+proportion} in post-GPT(pink line), pre-GPT period(skyblue line). The
+mean of paragraph proportion in pre-GPT period recorded 0.004231799, and
+0.008446278 in post-GPT period. It shows that the proportion increased
+after official release of ChatGPT.
 
 \subsubsection{Linear Regression of
 Post-GPT}\label{linear-regression-of-post-gpt}
-
-\begin{figure}
-\centering
-\includegraphics[width=0.5\linewidth,height=\textheight,keepaspectratio]{images/weekly_lm.png}
-\caption{Weekly proportion and post-GPT linear regression model}
-\end{figure}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -836,5 +816,14 @@ Post-GPT}\label{linear-regression-of-post-gpt}
 \end{Shaded}
 
 \pandocbounded{\includegraphics[keepaspectratio]{Final-project_files/figure-latex/unnamed-chunk-10-1.pdf}}
+\includegraphics[width=0.5\linewidth,height=\textheight,keepaspectratio]{images/weekly_lm.png}
+This graph shows the distribution of weekly proportioin of paragraphs
+which is predicted as ChatGPT, with its \textbf{linear regression model}
+fitted with post-GPT period data. Equation of linear regression model
+was approximately
+\(\text{Proportion} = 1.808295\times10^{-5} × \text{Week} - 3.449049\times10^{-1}\).
+The coefficient of ``Week'' variable was positive, so we can conclude
+that usage of ChatGPT in U. S. Senate press releases has been increasing
+since the release of ChatGPT.
 
 \end{document}
