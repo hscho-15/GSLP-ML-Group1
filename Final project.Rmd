@@ -44,7 +44,7 @@ $$\text{Attention(}Q,K,V\text{)}=\text{softmax(}\frac{QK^T}{\sqrt{d_k}}\text{)} 
 |  Larger Training Data and Batch Sizes: Uses much larger mini-batches and learning rates with significantly more training data.
 |  Byte-level Byte Pair Encoding (BPE): Implements the same tokenization as GPT-2, using a smaller vocabulary that requires fewer computational resources.
 
-### Integrated gradients
+### Integrated
 
 # Methods
 
