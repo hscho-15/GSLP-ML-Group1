@@ -24,7 +24,7 @@ $$z = \sum_i w_i x_i + b$$
 
 ### MLP, Back propagation and fine tuning
 |  MLP is a deep model that extend single perceptrons by adding hidden layers with nonlinear activation functions. MLPs with sufficient hidden units can approximate any continuous function.
-![Structure of MLP](images/MLP.webp)
+![Structure of MLP](images/Architecture-of-Multi-Layer-Perceptron.png){width=50%}
 |  Backpropagation training is a method that uses gradient descent to train multiple-layer perceptrons. It starts with changing the last hidden layers, and proceeds like optimizing the values towards input layers, by using the values used at step before.
 
 
@@ -86,7 +86,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
 
 use_python(
-  "C:/Users/User/AppData/Local/Programs/Python/Python311/python.exe", #use your own path to python
+  "C:/Users/ahnd6/AppData/Local/Programs/Python/Python39/python.exe", #use your own path to python
   required = TRUE
 )
 py_config()
