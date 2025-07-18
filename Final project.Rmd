@@ -642,5 +642,6 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
   This graph shows the distribution of weekly proportioin of paragraphs which is predicted as ChatGPT, with its **linear regression model** fitted with post-GPT period data. Equation of linear regression model was approximately $\text{Proportion} = 1.808295\times10^{-5} × \text{Week} - 3.449049\times10^{-1}$. The coefficient of "Week" variable was positive, so we can conclude that usage of ChatGPT in U. S. Senate press releases has been increasing since the release of ChatGPT.
 
 
-
+## Worldcloud Diagram
+![Wordcloud](images/Wordcloud.png){width=50%}
 
