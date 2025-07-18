@@ -92,7 +92,7 @@ RoBERTector is finetuned RoBerta that specify on AI detection on sentence level.
 # Training
 
 ## Set up python enviroment
-```{r setup, include=FALSE, warning = FALSE, message = FALSE}
+```{r setup, include=FALSE,eval=False, warning = FALSE, message = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
 
@@ -267,7 +267,7 @@ for epoch in range(1, num_epochs+1):
 ## Training Multi Attention Layer
 
 ### Load packages
-```{python, eval=FALSE, warning = FALSE, message = FALSE}
+```{python, eval=FALSE,include=FALSE, warning = FALSE, message = FALSE}
 import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -415,7 +415,7 @@ class HierAttnClassifier(nn.Module):
 
 ### Load RoBERTector and set up hyperparameters
 
-```{python, eval=FALSE, warning = FALSE, message = FALSE}
+```{python, eval=FALSE, include=FALSE,warning = FALSE, message = FALSE}
 # 5. Prepare data, loaders, model, optimizer
 model_path = "/kaggle/input/robertector/transformers/sentences/1/checkpoint-epoch3"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -445,7 +445,7 @@ criterion = nn.BCEWithLogitsLoss()# Use binary cross-entropy loss with logits fo
 ```
 
 ### Train Multi Attention Layer
-```{python, eval=FALSE, warning = FALSE, message = FALSE}
+```{python, eval=FALSE,include=FALSE, warning = FALSE, message = FALSE}
 from tqdm.auto import tqdm
 
 num_epochs = 6
@@ -541,10 +541,10 @@ print(f"Test Acc {acc:.4f} | F1 {f1:.4f}")
 |  From the above confusion matrix and ROC curve, we could conclude that model we trained showed high performance in the dataset, so this model is highly reliable in distinguishing between the two classes.
 
 
-## Graph Drawing Using R
+## Analysis
 
 ### Weekly Proportion and its Smooth Line
-```{r, warning = FALSE, message = FALSE}
+```{r, include=FALSE, eval=FALSE, warning = FALSE, message = FALSE}
 # Library Loading
 library(tidyverse)
 library(lubridate)
@@ -590,7 +590,7 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
   
 
 ### Average of Pre-GPT, Post_GPT
-```{r, warning = FALSE, message = FALSE}
+```{r,include=FALSE, eval=FALSE, warning = FALSE, message = FALSE}
 # Calculate Pre/Post GPT Means
 pre_mean <- mean(df_pre_gpt$prediction)
 post_mean <- mean(df_post_gpt$prediction)
@@ -619,7 +619,7 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
 
 
 ### Linear Regression of Post-GPT
-```{r, warning = FALSE, message = FALSE}
+```{r,include=FALSE, eval=FALSE, warning = FALSE, message = FALSE}
 # Dataframe Storing Post GPT's ChatGPT Proportion
 df_post_mean <- df_mean %>% filter(Week > gpt_date)
 
@@ -653,10 +653,10 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
   This graph shows the distribution of weekly proportioin of paragraphs which is predicted as ChatGPT, with its **linear regression model** fitted with post-GPT period data. Equation of linear regression model was approximately $\text{Proportion} = 1.808295\times10^{-5} × \text{Week} - 3.449049\times10^{-1}$. The coefficient of "Week" variable was positive, so we can conclude that usage of ChatGPT in U. S. Senate press releases has been increasing since the release of ChatGPT.
 
 
-## Worldcloud and Heatmaps
+## Interpretation
 ### Wordcloud
 
-```{r, include=FALSE, eval=FALSE, warning = FALSE, message = FALSE}
+```{r,include=FALSE, eval=FALSE, include=FALSE, eval=FALSE, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(wordcloud)
 library(dplyr)
@@ -699,14 +699,60 @@ wordcloud(
 )
 ```
 ![Wordcloud](images/Wordcloud.png){width=50%}
-
+According to word cloud, the model gains the most contextual meaning from 'senator', the text being U.S. senate press is logical.
 
 ### Heatmaps
 ```{r}
 
 ```
 
+Vaswani, A., et al. (2017). Attention Is All You Need. NeurIPS.
 
+Liu, Y., et al. (2019). RoBERTa: A Robustly Optimized BERT Pretraining Approach. arXiv:1907.11692.
+
+Goodfellow, I., Bengio, Y., & Courville, A. (2016). Deep Learning. MIT Press.
+
+Devlin, J., et al. (2019). BERT: Pre‐training of Deep Bidirectional Transformers for Language Understanding.
+
+Rogers, A., et al. (2020). A Primer on Neural Network Models for Natural Language Processing.
+
+Bahdanau, D., et al. (2014). Neural Machine Translation by Jointly Learning to Align and Translate.
+
+Luong, M., et al. (2015). Effective Approaches to Attention‐based Neural Machine Translation.
+
+Rosenblatt, F. (1958). The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain.
+
+Minsky, M. & Papert, S. (1969). Perceptrons: An Introduction to Computational Geometry.
+
+Rumelhart, D., et al. (1986). Learning Representations by Back‐Propagating Errors.
+
+Brown, T., et al. (2020). Language Models are Few‐Shot Learners.
+
+Radford, A., et al. (2019). Language Models are Unsupervised Multitask Learners.
+
+Wang, W. & Li, Q. (2024). The Basic Theory for Transformer‐based Large Language Models.
+
+Werbos, P. (1974). Beyond Regression: New Tools for Prediction and Analysis in the Behavioral Sciences.
+
+LeCun, Y., et al. (1989). Backpropagation Applied to Handwritten Zip Code Recognition.
+
+Leibniz, G. W. (1684). Nova Methodus pro Maximis et Minimis.
+
+Spivak, M. (1994). Calculus.
+
+Yosinski, J., et al. (2014). How Transferable are Features in Deep Neural Networks?
+
+Howard, J. & Ruder, S. (2018). Universal Language Model Fine‐tuning for Text Classification.
+
+Hu, E., et al. (2021). LoRA: Low‐Rank Adaptation of Large Language Models.
+
+Anthony, M. & Bartlett, P. L. (2009). Neural Network Learning: Theoretical Foundations.
+
+Haykin, S. (2008). Neural Networks and Learning Machines.
+
+Ultralytics. (n.d.). From Code to Conversation: How Does an LLM Work? https://www.ultralytics.com/ko/blog/from-code-to-conversation-how-does-an-llm-work (Accessed: 2025‑07‑06)
+
+Great Learning. (n.d.). What is Fine‑Tuning? https://www.mygreatlearning.com/blog/what-is-fine-tuning/ (Accessed: 2025‑07‑06)
 
 
 
