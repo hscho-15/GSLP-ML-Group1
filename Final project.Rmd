@@ -115,7 +115,7 @@ if (length(to_install)) {
 ### Load data and split paragraphs into sentences
 ```{python, eval=FALSE, warning = FALSE, message = FALSE}
 import pandas as pd
-df=pd.read_csv('/kaggle/input/ai-text/ai_press_releases.csv')
+df=pd.read_csv('ai_press_releases.csv')
 df=df.dropna()
 human=df['non_chat_gpt_press_release']
 ai=df['chat_gpt_generated_release']
