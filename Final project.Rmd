@@ -7,7 +7,20 @@ output:
     latex_engine: xelatex
 ---
 
+# Abstract
+RoBERTector detects AI-generated sentences with high precision and recall, and performs efficiently with early convergence. In this paper, we provide a novel tool based on the RoBERtector (RoBEREctor) for the detection of artificially generated sentences.
+
 # Introduction
+
+Research Question: To what extent did ChatGPT contribute
+to official U.S. Senate press releases?
+Generative models like ChatGPT suffers from hallucination,
+generating false and misleading information. While U.S. Senate press must have transparency and
+accountability, meaning AI generated texts can be dangerous.
+Thus we aim to ensure trust in public communication, and maintain transparency and accountability in Senate press
+releases by classifying AI generated text in U.S. senate press.
+
+
 The original idea on this project was using Sentence Transformers(SBERT, for reference view https://sbert.net/) embedding to classify, human and AI generated text. However this attempt was unsuccessful because features that were extracted from SBERT failed to capture any significant information as shown in t-SNE plot below. Seeing this, choose to fine tune pretrained LLM RoBERTa. 
 
 ![t-SNE plot of SBERT feature](images/TSNE_plot.png)
@@ -25,7 +38,7 @@ $$z = \sum_i w_i x_i + b$$
 ### MLP, Back propagation and fine tuning
 |  MLP is a deep model that extend single perceptrons by adding hidden layers with nonlinear activation functions. MLPs with sufficient hidden units can approximate any continuous function.
 
-![Structure of MLP](images/Architecture-of-Multi-Layer-Perceptron.png)[width=50%]
+![Structure of MLP](images/Architecture-of-Multi-Layer-Perceptron.png)
 | Fine-tuning is a supervised adaptation to specific tasks, where a pretrained model is further trained on labeled data to specialize in a narrower domain or objective. 
 
 
