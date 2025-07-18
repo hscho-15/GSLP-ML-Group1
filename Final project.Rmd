@@ -716,8 +716,62 @@ According to word cloud, the model gains the most contextual meaning from 'senat
 
 ### Heatmaps
 ```{r}
+library(tidyverse)
+library(jsonlite)
+library(ggplot2)
 
+# 1. load data
+df <- read_csv("data/interpretation.csv")
+
+# 2. sentence_weight: JSON sum vectors
+df <- df %>%
+  mutate(sentence_weight = map_dbl(sentence_weight, ~ {
+    tryCatch({
+      val <- sum(fromJSON(.))  # ✅ 전체 요소 합
+      if (is.null(val)) NA_real_ else val
+    }, error = function(e) NA_real_)
+  }))
+
+# 3. get mean from each sentence and paragraph
+heatmap_df <- df %>%
+  group_by(paragraph_id, sentence_rank) %>%
+  summarise(weight = mean(sentence_weight, na.rm = TRUE), .groups = "drop") %>%
+  filter(paragraph_id >= 0 & paragraph_id <= 15) %>%
+  mutate(
+    paragraph_id = factor(paragraph_id, levels = 0:15),
+    sentence_rank = factor(sentence_rank, levels = sort(unique(sentence_rank)))
+  )
+
+# 4. get valid weigths
+valid_weights <- heatmap_df$weight[!is.na(heatmap_df$weight)]
+
+# 5. Heatmap
+ggplot(heatmap_df, aes(x = sentence_rank, y = paragraph_id, fill = weight)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  scale_fill_gradientn(
+    colours = c("#0d0887", "#6a00a8", "#b12a90", "#e16462", "#fca636", "#f0f921"),
+    limits = c(min(valid_weights), max(valid_weights)),
+    na.value = "grey90"
+  ) +
+  labs(
+    title = "Sum of Sentence Weight by Paragraph and Sentence",
+    x = "Sentence Rank",
+    y = "Paragraph ID",
+    fill = "Weight Sum"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid = element_blank()
+  )
 ```
+![heat map of sentence weights](images/heatmap.png)
+Heat map reveals important sentences in paragraphs.
+
+# Discussion
+
+
+# Refernces
 
 Vaswani, A., et al. (2017). Attention Is All You Need. NeurIPS.
 
