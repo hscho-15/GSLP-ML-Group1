@@ -44,11 +44,20 @@ $$\text{Attention(}Q,K,V\text{)}=\text{softmax(}\frac{QK^T}{\sqrt{d_k}}\text{)} 
 |  Larger Training Data and Batch Sizes: Uses much larger mini-batches and learning rates with significantly more training data.
 |  Byte-level Byte Pair Encoding (BPE): Implements the same tokenization as GPT-2, using a smaller vocabulary that requires fewer computational resources.
 
-### Integrated
+## Theoretical Background: Integrated Gradients
 
-# Methods
+To interpret the predictions made by deep neural networks, we apply **Integrated Gradients (IG)** — a method introduced to attribute a model's prediction to its input features. IG helps identify which tokens or sentences contribute most to the final classification outcome.
 
-Our approach combines sentence-level encoding with a multi-attention mechanism to classify paragraph-level text. This method is based on our assumption that GPT will have hard time 
+Formally, for a model \( F \) and an input \( x \), the integrated gradient of the \( i \)-th feature is defined as:
+
+$$
+\text{IG}_i(x) = (x_i - x_i') \times \int_{\alpha=0}^1 \frac{\partial F(x' + \alpha \cdot (x - x'))}{\partial x_i} \, d\alpha
+$$
+
+where \( x' \) is a baseline input (e.g., zero embedding), and the integral computes the average gradient of the model output with respect to the input along the path from \( x' \) to \( x \).
+
+By aggregating gradients across interpolated inputs, IG provides a more stable and theoretically justified measure of feature importance compared to raw gradients. This is particularly useful in our context of AI-text detection, as it allows us to visualize and explain which words or sentences influenced the model's decision.
+
 
 ## RoBERTector
 
