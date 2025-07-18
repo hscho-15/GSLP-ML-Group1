@@ -1,6 +1,6 @@
 ---
 title: "Final project"
-author: "Danny Ahn"
+author: "Danny Ahn,Group 1(DERT)"
 date: "2025-07-15"
 output: 
   pdf_document:
@@ -105,7 +105,7 @@ RoBERTector is finetuned RoBerta that specify on AI detection on sentence level.
 # Training
 
 ## Set up python enviroment
-```{r setup, include=FALSE,eval=False, warning = FALSE, message = FALSE}
+```{r setup, include=FALSE,, warning = FALSE, message = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
 
@@ -715,24 +715,24 @@ wordcloud(
 According to word cloud, the model gains the most contextual meaning from 'senator', the text being U.S. senate press is logical.
 
 ### Heatmaps
-```{r}
+```{r,include=FALSE, eval=FALSE, include=FALSE, eval=FALSE, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(jsonlite)
 library(ggplot2)
 
-# 1. load data
+# 데이터 불러오기
 df <- read_csv("data/interpretation.csv")
 
-# 2. sentence_weight: JSON sum vectors
+# sentence_weight: JSON vector sum
 df <- df %>%
   mutate(sentence_weight = map_dbl(sentence_weight, ~ {
     tryCatch({
-      val <- sum(fromJSON(.))  # ✅ 전체 요소 합
+      val <- sum(fromJSON(.))
       if (is.null(val)) NA_real_ else val
     }, error = function(e) NA_real_)
   }))
 
-# 3. get mean from each sentence and paragraph
+# mean paragraph
 heatmap_df <- df %>%
   group_by(paragraph_id, sentence_rank) %>%
   summarise(weight = mean(sentence_weight, na.rm = TRUE), .groups = "drop") %>%
@@ -742,22 +742,33 @@ heatmap_df <- df %>%
     sentence_rank = factor(sentence_rank, levels = sort(unique(sentence_rank)))
   )
 
-# 4. get valid weigths
-valid_weights <- heatmap_df$weight[!is.na(heatmap_df$weight)]
+# in paragraph min-max norm
+heatmap_df <- heatmap_df %>%
+  group_by(paragraph_id) %>%
+  mutate(
+    weight_min = min(weight, na.rm = TRUE),
+    weight_max = max(weight, na.rm = TRUE),
+    weight_norm_paragraph = if_else(
+      weight_max - weight_min == 0,  # 만약 max = min인 경우 
+      0,
+      (weight - weight_min) / (weight_max - weight_min)
+    )
+  ) %>%
+  ungroup()
 
-# 5. Heatmap
-ggplot(heatmap_df, aes(x = sentence_rank, y = paragraph_id, fill = weight)) +
+# Heatmap
+ggplot(heatmap_df, aes(x = sentence_rank, y = paragraph_id, fill = weight_norm_paragraph)) +
   geom_tile(color = "white", linewidth = 0.5) +
   scale_fill_gradientn(
     colours = c("#0d0887", "#6a00a8", "#b12a90", "#e16462", "#fca636", "#f0f921"),
-    limits = c(min(valid_weights), max(valid_weights)),
+    limits = c(0, 1),
     na.value = "grey90"
   ) +
   labs(
-    title = "Sum of Sentence Weight by Paragraph and Sentence",
+    title = "Heatmap of Sentence Weight Normalized by Paragraph (Min-Max)",
     x = "Sentence Rank",
     y = "Paragraph ID",
-    fill = "Weight Sum"
+    fill = "Normalized\nWeight"
   ) +
   theme_minimal(base_size = 13) +
   theme(
@@ -765,11 +776,24 @@ ggplot(heatmap_df, aes(x = sentence_rank, y = paragraph_id, fill = weight)) +
     panel.grid = element_blank()
   )
 ```
-![heat map of sentence weights](images/heatmap.png)
+![normalized heat map of sentence weights](images/normalized heatmap.png)
 Heat map reveals important sentences in paragraphs.
 
 # Discussion
+RoBERTector: strong generalization at sentence level
 
+Hierarchical model: near-perfect paragraph detection
+
+Contextual patterns differ between AI and human writing
+
+Limitations:
+• Assumes no AI use before Nov 2022
+• Only 10 senators included
+
+Future Work:
+• Broader sources and languages
+• Mixed-generation detection
+• Real-time content screening
 
 # Refernces
 
