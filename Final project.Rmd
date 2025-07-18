@@ -642,6 +642,59 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
   This graph shows the distribution of weekly proportioin of paragraphs which is predicted as ChatGPT, with its **linear regression model** fitted with post-GPT period data. Equation of linear regression model was approximately $\text{Proportion} = 1.808295\times10^{-5} × \text{Week} - 3.449049\times10^{-1}$. The coefficient of "Week" variable was positive, so we can conclude that usage of ChatGPT in U. S. Senate press releases has been increasing since the release of ChatGPT.
 
 
-## Worldcloud Diagram
+## Worldcloud and Heatmaps
+### Wordcloud
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(wordcloud)
+library(dplyr)
+library(RColorBrewer)
+library(stopwords)
+
+par(cex=1.25)
+
+interpert <- read_csv("data/interpretation.csv")
+
+df_clean <- interpert %>%
+  mutate(
+    token = as.character(token),
+    token_weight = as.numeric(token_weight)
+  ) %>%
+  mutate(
+    token = gsub("â", "", token),
+    token = gsub("Ġ", "", token),
+    token = gsub("[[:punct:]]", "", token),
+    token = tolower(token)
+  ) %>%
+  filter(
+    !grepl("<s>|</s>", token),
+    !tolower(token) %in% stopwords::stopwords("en"),
+    nchar(token) > 2,
+    !token %in% c("â", "s", "l", "u", "f", "at", "il", "la", "lo", "jo") 제거
+  ) %>%
+  group_by(token) %>%
+  summarise(weight = sum(token_weight, na.rm = TRUE)) %>%
+  ungroup()
+
+wordcloud(
+  words = df_clean$token,
+  freq = df_clean$weight,
+  min.freq = 1,
+  max.words = 100,
+  random.order = FALSE,
+  scale = c(4, 0.5),
+  colors = brewer.pal(8, "Dark2")
+)
+```
 ![Wordcloud](images/Wordcloud.png){width=50%}
+
+
+### Heatmaps
+```{r}
+
+```
+
+
+
+
 
