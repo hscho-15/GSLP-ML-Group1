@@ -25,7 +25,7 @@ $$z = \sum_i w_i x_i + b$$
 ### MLP, Back propagation and fine tuning
 |  MLP is a deep model that extend single perceptrons by adding hidden layers with nonlinear activation functions. MLPs with sufficient hidden units can approximate any continuous function.
 
-![Structure of MLP](images/MLP.webp)[width=50%]
+![Structure of MLP](images/Architecture-of-Multi-Layer-Perceptron.png)[width=50%]
 | Fine-tuning is a supervised adaptation to specific tasks, where a pretrained model is further trained on labeled data to specialize in a narrower domain or objective. 
 
 
@@ -645,7 +645,8 @@ ggplot(data = df_mean, aes(x = Week, y = mean_chatgpt)) +
 
 ## Worldcloud and Heatmaps
 ### Wordcloud
-```{r, warning = FALSE, message = FALSE}
+
+```{r, include=FALSE, eval=FALSE, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(wordcloud)
 library(dplyr)
@@ -654,7 +655,7 @@ library(stopwords)
 
 par(cex=1.25)
 
-interpert <- read_csv("data/interpretation.csv")
+interpert <- read_csv("data/interpretation.csv") #Use zip file included
 
 df_clean <- interpert %>%
   mutate(
@@ -671,7 +672,7 @@ df_clean <- interpert %>%
     !grepl("<s>|</s>", token),
     !tolower(token) %in% stopwords::stopwords("en"),
     nchar(token) > 2,
-    !token %in% c("â", "s", "l", "u", "f", "at", "il", "la", "lo", "jo") 제거
+    !token %in% c("â", "s", "l", "u", "f", "at", "il", "la", "lo", "jo")
   ) %>%
   group_by(token) %>%
   summarise(weight = sum(token_weight, na.rm = TRUE)) %>%
